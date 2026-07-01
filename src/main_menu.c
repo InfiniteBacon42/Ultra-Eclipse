@@ -19,6 +19,7 @@
 #include "mystery_event_menu.h"
 #include "naming_screen.h"
 #include "oak_speech.h"
+#include "kukui_call.h"
 #include "option_menu.h"
 #include "overworld.h"
 #include "palette.h"

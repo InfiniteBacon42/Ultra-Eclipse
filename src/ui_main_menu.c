@@ -42,6 +42,7 @@
 #include "option_menu.h"
 #include "mystery_event_menu.h"
 #include "mystery_gift_menu.h"
+#include "kukui_call.h"
 #include "link.h"
 
 /*
@@ -437,7 +438,8 @@ void Task_OpenMainMenu(u8 taskId)
         {                //  where the UI is initialized by swapping a task func with this one 
             case HAS_NO_SAVED_GAME:
             default:
-                SetMainCallback2(CB2_NewGameBirchSpeech_FromNewMainMenu);
+                // SetMainCallback2(CB2_NewGameBirchSpeech_FromNewMainMenu);
+                SetMainCallback2(CB2_NewGameKukuiCall_FromNewMainMenu);
                 DestroyTask(taskId);
                 return;
             case HAS_SAVED_GAME:       
