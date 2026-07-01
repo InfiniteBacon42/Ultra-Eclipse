@@ -28,6 +28,7 @@
 #include "text_window.h"
 #include "window.h"
 #include "util.h"
+#include "m4a.h"
 
 static u8 sKukuiCallMainTaskId;
 
@@ -38,27 +39,38 @@ static void Task_KukuiCall_GettingACall(u8);
 static void SpriteCB_Null(struct Sprite *sprite);
 static void NewGameKukuiCall_PrintDialogue(void);
 
+extern const struct OamData gOamData_AffineOff_ObjBlend_64x64;
 extern const struct OamData gOamData_AffineOff_ObjBlend_64x32;
 extern const struct OamData gOamData_AffineOff_ObjBlend_32x32;
+extern const struct OamData gOamData_AffineOff_ObjBlend_32x16;
 extern const struct OamData gOamData_AffineOff_ObjBlend_16x16;
+extern const struct OamData gOamData_AffineOff_ObjNormal_64x64;
 extern const struct OamData gOamData_AffineOff_ObjNormal_32x32;
 extern const struct OamData gOamData_AffineOff_ObjNormal_32x16;
 extern const struct OamData gOamData_AffineOff_ObjNormal_16x8;
 
+// The Player Character's PC Wallpaper - BG Layer 3 (Bottom, Priority 3) of the Kukui Call scene
 static const u32 sComputer_Background_Tiles[] = INCGFX_U32("graphics/kukui_call/computer_bg_tiles.png", ".4bpp.smol");
 static const u32 sComputer_Background_Tilemap[] = INCGFX_U32("graphics/kukui_call/computer_bg_tiles.bin", ".smolTM");
 static const u16 sComputer_Background_Pals[] = INCGFX_U16("graphics/kukui_call/computer_bg_tiles.png", ".gbapal");
+
+// Kukui's Background in the video call window - BG Layer 2 (Lower, Priority 2) of the Kukui Call scene
+// Background1 is visually askew, Background2 is visually upright
 static const u32 sCall_Background1_Tiles[] = INCGFX_U32("graphics/kukui_call/call_bg1_tiles.png", ".4bpp.smol");
 static const u32 sCall_Background1_Tilemap[] = INCGFX_U32("graphics/kukui_call/call_bg1_tiles.bin", ".smolTM");
 static const u32 sCall_Background2_Tiles[] = INCGFX_U32("graphics/kukui_call/call_bg2_tiles.png", ".4bpp.smol");
 static const u32 sCall_Background2_Tilemap[] = INCGFX_U32("graphics/kukui_call/call_bg2_tiles.bin", ".smolTM");
 static const u16 sCall_Background_Pals[] = INCGFX_U16("graphics/kukui_call/call_bg1_tiles.png", ".gbapal");
-static const u32 sCall_Window_Tiles[] = INCGFX_U32("graphics/kukui_call/call_window/call_window_tiles.png", ".4bpp.smol");
-static const u32 sCall_Window_Tilemap[] = INCGFX_U32("graphics/kukui_call/call_window/call_window_tiles.bin", ".smolTM");
-static const u16 sCall_Window_Pals[] = INCGFX_U16("graphics/kukui_call/call_window/call_window_tiles.png", ".gbapal");
-static const u32 sCall_Window_UI_Gfx[] = INCGFX_U32("graphics/kukui_call/call_window/call_window_ui.png", ".4bpp.smol");
-static const u16 sCall_Window_UI_Pals[] = INCGFX_U16("graphics/kukui_call/call_window/call_window_ui.png", ".gbapal");
 
+// Kukui himself - BG Layer 1 (Higher, Priority 1) of the Kukui Call scene
+// Kukui1 - Leaned back, visually askew
+// Kukui2 - Leaned forward, grabbing camera, still visually askew
+// Kukui3 - Leaned forward, grabbing camera, now visually upright
+// Kukui4 - Leaned back, waving to camera
+// Kukui5 - Default pose
+// Kukui6 - Leaned to his left, gesturing to content to his right
+// Kukui7 - Holding out pokeball to camera
+// Kukui8 - Head tilted back, hand up as if tossing pokeball up out of frame
 static const u32 sKukui1_Tiles[] = INCGFX_U32("graphics/kukui_call/kukui/kukui1_tiles.png", ".4bpp.smol");
 static const u32 sKukui1_Tilemap[] = INCGFX_U32("graphics/kukui_call/kukui/kukui1_tiles.bin", ".smolTM");
 static const u32 sKukui2_Tiles[] = INCGFX_U32("graphics/kukui_call/kukui/kukui2_tiles.png", ".4bpp.smol");
@@ -77,41 +89,57 @@ static const u32 sKukui8_Tiles[] = INCGFX_U32("graphics/kukui_call/kukui/kukui8_
 static const u32 sKukui8_Tilemap[] = INCGFX_U32("graphics/kukui_call/kukui/kukui8_tiles.bin", ".smolTM");
 static const u16 sKukui_Pals[] = INCGFX_U16("graphics/kukui_call/kukui/kukui1_tiles.png", ".gbapal");
 
+// Kukui's Rockruff - BG Layer 0 (Top, Priority 0) of the Kukui Call scene
 static const u32 sRockruff_Tiles[] = INCGFX_U32("graphics/kukui_call/rockruff/rockruff_tiles.png", ".4bpp.smol");
 static const u32 sRockruff_Tilemap[] = INCGFX_U32("graphics/kukui_call/rockruff/rockruff_tiles.bin", ".smolTM");
 static const u16 sRockruff_Pals[] = INCGFX_U16("graphics/kukui_call/rockruff/rockruff_tiles.png", ".gbapal");
 
+// Sprites for the video call's app window
+// call_window_scalable - 32x16 - a 23x14 rectangle that can be scaled up and down and hue-shifted to simulate a computer window opening and closing
+// call_window_corner - 64x64 - a north-west corner that can be rotated +90* for NE, SE, and SW
+// call_window_edge - 64x32 - a north edge that can be vertically flipped
+// call_window_ui - 64x32 - the window's top bar with minimize, maximize, and close buttons
+static const u32 sCall_Window_Scalable_Gfx[] = INCGFX_U32("graphics/kukui_call/call_window/call_window_scalable.png", ".4bpp.smol");
+static const u32 sCall_Window_Corner_Gfx[] = INCGFX_U32("graphics/kukui_call/call_window/call_window_corner.png", ".4bpp.smol");
+static const u32 sCall_Window_Edge_Gfx[] = INCGFX_U32("graphics/kukui_call/call_window/call_window_edge.png", ".4bpp.smol");
+static const u32 sCall_Window_UI_Gfx[] = INCGFX_U32("graphics/kukui_call/call_window/call_window_ui.png", ".4bpp.smol");
+static const u16 sCall_Window_Pals[] = INCGFX_U16("graphics/kukui_call/call_window/call_window_corner.png", ".gbapal");
+
+// Sprites for the desktop's apps
+// settings_icon - 32x32 - settings app icon
+// camera_icon - 32x32 - seems to be a photos folder icon but might just be a camera app icon
+// notification_icon - 16x16 - a red dot to place on the upper right corner of the video call app icon while the call is active
+// video icon - 4x2 spritesheet of 32x32 frames - video call app icon
+  // offset 0 - default visual
+  // offset 16 - "Ringing Frame 1" - the icon raises slightly with a glowing border
+  // offset 32 - "Ringing Frame 2" - the icon stays raised, the border expands out and away like a wave
+  // offset 48 - "Ringing Frame 3" - the icon lowers slightly, the wave expands fully and thins as if disappating
+  // offset 64 - "Selecting Frame 1" - the icon becomes fully white
+  // offset 80 - "Selecting Frame 2" - the icon becomes larger, begins fading back to normal
+  // offset 96 - "Selecting Frame 3" - the icon size remains, continues fading back to normal
+  // offset 112 - "Selecting Frame 4" - the icon becomes slightly smaller, continues fading back to normal
+static const u32 sSettings_Icon_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/settings_icon.png", ".4bpp.smol");
+static const u16 sSettings_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/icons/settings_icon.png", ".gbapal");
+static const u32 sCamera_Icon_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/camera_icon.png", ".4bpp.smol");
+static const u16 sCamera_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/icons/camera_icon.png", ".gbapal");
 static const u32 sNotification_Icon_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/notification_icon.png", ".4bpp.smol");
 static const u16 sNotification_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/icons/notification_icon.png", ".gbapal");
 static const u32 sVideo_Icon_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/video_icon.png", ".4bpp.smol", "-mwidth 4 -mheight 4");
 static const u16 sVideo_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/icons/video_icon.png", ".gbapal");
-static const u32 sCamera_Icon_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/camera_icon.png", ".4bpp.smol");
-static const u16 sCamera_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/icons/camera_icon.png", ".gbapal");
-static const u32 sSettings_Icon_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/settings_icon.png", ".4bpp.smol");
-static const u16 sSettings_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/icons/settings_icon.png", ".gbapal");
 
 static const struct BgTemplate sBgTemplates[] =
 {
     {
         .bg = 0,
         .charBaseIndex = 0,
-        .mapBaseIndex = 8,
+        .mapBaseIndex = 28,
         .screenSize = 0,
         .paletteMode = 0,
-        .priority = 3,
-        .baseTile = 292
-    },
-    {
-        .bg = 1,
-        .charBaseIndex = 0,
-        .mapBaseIndex = 30,
-        .screenSize = 0,
-        .paletteMode = 0,
-        .priority = 2,
+        .priority = 0,
         .baseTile = 0
     },
     {
-        .bg = 2,
+        .bg = 1,
         .charBaseIndex = 0,
         .mapBaseIndex = 29,
         .screenSize = 0,
@@ -120,13 +148,22 @@ static const struct BgTemplate sBgTemplates[] =
         .baseTile = 0
     },
     {
-        .bg = 3,
+        .bg = 2,
         .charBaseIndex = 0,
-        .mapBaseIndex = 28,
+        .mapBaseIndex = 30,
         .screenSize = 0,
         .paletteMode = 0,
-        .priority = 0,
+        .priority = 2,
         .baseTile = 0
+    },
+    {
+        .bg = 3,
+        .charBaseIndex = 0,
+        .mapBaseIndex = 8,
+        .screenSize = 0,
+        .paletteMode = 0,
+        .priority = 3,
+        .baseTile = 292
     }
 };
 
@@ -179,22 +216,33 @@ static const u8 sTextColor_DarkGray[] = { 0, 2, 3, 0 };
 
 static const struct ScrollArrowsTemplate sScrollArrowsTemplate_MainMenu = {2, 0x78, 8, 3, 0x78, 0x98, 3, 4, 1, 1, 0};
 
-#define GFX_TAG_ICON_NOTIFICATION   0x1000
-#define GFX_TAG_ICON_VIDEO          0x1001
-#define GFX_TAG_ICON_CAMERA         0x1002
-#define GFX_TAG_ICON_SETTINGS       0x1003
-#define GFX_TAG_CALL_WINDOW_UI      0x1004
+#define GFX_TAG_ICON_SETTINGS       0x1000
+#define GFX_TAG_ICON_CAMERA         0x1001
+#define GFX_TAG_ICON_NOTIFICATION   0x1002
+#define GFX_TAG_ICON_VIDEO          0x1003
+#define GFX_TAG_CALL_WINDOW_CORNER  0x1004
+#define GFX_TAG_CALL_WINDOW_EDGE    0x1005
+#define GFX_TAG_CALL_WINDOW_UI      0x1006
+#define GFX_TAG_CALL_WINDOW_SCALABLE    0x1007
 
-#define PAL_TAG_ICON_NOTIFICATION   0x1000
-#define PAL_TAG_ICON_VIDEO          0x1001
-#define PAL_TAG_ICON_CAMERA         0x1002
-#define PAL_TAG_ICON_SETTINGS       0x1003
-#define PAL_TAG_CALL_WINDOW_UI      0x1004
+#define PAL_TAG_ICON_SETTINGS       0x1000
+#define PAL_TAG_ICON_CAMERA         0x1001
+#define PAL_TAG_ICON_NOTIFICATION   0x1002
+#define PAL_TAG_ICON_VIDEO          0x1003
+#define PAL_TAG_CALL_WINDOW         0x1004
 
-enum
+static const struct CompressedSpriteSheet sSettings_Icon_SpriteSheet =
 {
-    SPRITE_TYPE_ICON_NOTIFICATION,
-    SPRITE_TYPE_ICON,
+    .data = sSettings_Icon_Gfx,
+    .size = 0x400,
+    .tag = GFX_TAG_ICON_SETTINGS
+};
+
+static const struct CompressedSpriteSheet sCamera_Icon_SpriteSheet =
+{
+    .data = sCamera_Icon_Gfx,
+    .size = 0x400,
+    .tag = GFX_TAG_ICON_CAMERA
 };
 
 static const struct CompressedSpriteSheet sNotification_Icon_SpriteSheet =
@@ -211,17 +259,18 @@ static const struct CompressedSpriteSheet sVideo_Icon_SpriteSheet =
     .tag = GFX_TAG_ICON_VIDEO
 };
 
-static const struct CompressedSpriteSheet sCamera_Icon_SpriteSheet =
+static const struct CompressedSpriteSheet sCall_Window_Corner_SpriteSheet =
 {
-    .data = sCamera_Icon_Gfx,
-    .size = 0x400,
-    .tag = GFX_TAG_ICON_CAMERA
+    .data = sCall_Window_Corner_Gfx,
+    .size = 0x1000,
+    .tag = GFX_TAG_CALL_WINDOW_CORNER
 };
-static const struct CompressedSpriteSheet sSettings_Icon_SpriteSheet =
+
+static const struct CompressedSpriteSheet sCall_Window_Edge_SpriteSheet =
 {
-    .data = sSettings_Icon_Gfx,
-    .size = 0x400,
-    .tag = GFX_TAG_ICON_SETTINGS
+    .data = sCall_Window_Edge_Gfx,
+    .size = 0x1000,
+    .tag = GFX_TAG_CALL_WINDOW_EDGE
 };
 
 static const struct CompressedSpriteSheet sCall_Window_UI_SpriteSheet =
@@ -231,38 +280,41 @@ static const struct CompressedSpriteSheet sCall_Window_UI_SpriteSheet =
     .tag = GFX_TAG_CALL_WINDOW_UI
 };
 
-static const union AnimCmd sVideo_Icon_No_Anim[] =
+static const struct CompressedSpriteSheet sCall_Window_Scalable_SpriteSheet =
 {
-    ANIMCMD_FRAME( 0, 0),
-    ANIMCMD_END
+    .data = sCall_Window_Scalable_Gfx,
+    .size = 0x200,
+    .tag = GFX_TAG_CALL_WINDOW_SCALABLE
 };
 
-static const union AnimCmd sVideo_Icon_Ringing_Anim[] =
+static const struct SpriteTemplate sSettings_Icon_SpriteTemplate =
 {
-    ANIMCMD_FRAME( 0, 0),
-    ANIMCMD_FRAME(32, 0),
-    ANIMCMD_FRAME(64, 0),
-    ANIMCMD_FRAME(96, 0),
-    ANIMCMD_FRAME( 0, 0),
-    ANIMCMD_END
+    .tileTag = GFX_TAG_ICON_SETTINGS,
+    .paletteTag = PAL_TAG_ICON_SETTINGS,
+    .oam = &gOamData_AffineOff_ObjBlend_32x32,
+    .images = NULL, // sSettings_Icon_Gfx,
+    .callback = SpriteCallbackDummy
 };
 
-static const union AnimCmd sVideo_Icon_Selecting_Anim[] =
+static const struct SpritePalette sSettings_Icon_SpritePalette =
 {
-    ANIMCMD_FRAME( 0, 0),
-    ANIMCMD_FRAME( 0,32),
-    ANIMCMD_FRAME(32,32),
-    ANIMCMD_FRAME(64,32),
-    ANIMCMD_FRAME(96,32),
-    ANIMCMD_FRAME( 0, 0),
-    ANIMCMD_END
+    .data = sSettings_Icon_Pals,
+    .tag = PAL_TAG_ICON_SETTINGS
 };
 
-static const union AnimCmd *const sVideo_Icon_Anims[] =
+static const struct SpriteTemplate sCamera_Icon_SpriteTemplate =
 {
-    sVideo_Icon_No_Anim,
-    sVideo_Icon_Ringing_Anim,
-    sVideo_Icon_Selecting_Anim
+    .tileTag = GFX_TAG_ICON_CAMERA,
+    .paletteTag = PAL_TAG_ICON_CAMERA,
+    .oam = &gOamData_AffineOff_ObjBlend_32x32,
+    .images = NULL, // sCamera_Icon_Gfx,
+    .callback = SpriteCallbackDummy
+};
+
+static const struct SpritePalette sCamera_Icon_SpritePalette =
+{
+    .data = sCamera_Icon_Pals,
+    .tag = PAL_TAG_ICON_CAMERA
 };
 
 static const struct SpriteTemplate sNotification_Icon_SpriteTemplate =
@@ -278,6 +330,40 @@ static const struct SpritePalette sNotification_Icon_SpritePalette =
 {
     .data = sNotification_Icon_Pals,
     .tag = PAL_TAG_ICON_NOTIFICATION
+};
+
+static const union AnimCmd sVideo_Icon_No_Anim[] =
+{
+    ANIMCMD_FRAME( 0, 0),
+    ANIMCMD_END
+};
+
+static const union AnimCmd sVideo_Icon_Ringing_Anim[] =
+{
+    ANIMCMD_FRAME( 0, 0),
+    ANIMCMD_FRAME(16, 6),
+    ANIMCMD_FRAME(32, 3),
+    ANIMCMD_FRAME(48, 6),
+    ANIMCMD_FRAME( 0, 0),
+    ANIMCMD_END
+};
+
+static const union AnimCmd sVideo_Icon_Selecting_Anim[] =
+{
+    ANIMCMD_FRAME( 0, 0),
+    ANIMCMD_FRAME( 64,10),
+    ANIMCMD_FRAME( 80,10),
+    ANIMCMD_FRAME( 96,10),
+    ANIMCMD_FRAME( 112,10),
+    ANIMCMD_FRAME( 0,0),
+    ANIMCMD_END
+};
+
+static const union AnimCmd *const sVideo_Icon_Anims[] =
+{
+    sVideo_Icon_No_Anim,
+    sVideo_Icon_Ringing_Anim,
+    sVideo_Icon_Selecting_Anim
 };
 
 static const struct SpriteFrameImage sVideo_Icon_PicTable[] =
@@ -302,49 +388,46 @@ static const struct SpritePalette sVideo_Icon_SpritePalette =
     .tag = PAL_TAG_ICON_VIDEO
 };
 
-static const struct SpriteTemplate sCamera_Icon_SpriteTemplate =
+static const struct SpriteTemplate sCall_Window_Corner_SpriteTemplate =
 {
-    .tileTag = GFX_TAG_ICON_CAMERA,
-    .paletteTag = PAL_TAG_ICON_CAMERA,
-    .oam = &gOamData_AffineOff_ObjBlend_32x32,
-    .images = NULL, // sCamera_Icon_Gfx,
+    .tileTag = GFX_TAG_CALL_WINDOW_CORNER,
+    .paletteTag = PAL_TAG_CALL_WINDOW,
+    .oam = &gOamData_AffineOff_ObjBlend_64x64,
+    .images = NULL, // sCall_Window_UI_Gfx,
     .callback = SpriteCallbackDummy
 };
 
-static const struct SpritePalette sCamera_Icon_SpritePalette =
+static const struct SpriteTemplate sCall_Window_Edge_SpriteTemplate =
 {
-    .data = sCamera_Icon_Pals,
-    .tag = PAL_TAG_ICON_CAMERA
-};
-
-static const struct SpriteTemplate sSettings_Icon_SpriteTemplate =
-{
-    .tileTag = GFX_TAG_ICON_SETTINGS,
-    .paletteTag = PAL_TAG_ICON_SETTINGS,
-    .oam = &gOamData_AffineOff_ObjBlend_32x32,
-    .images = NULL, // sSettings_Icon_Gfx,
+    .tileTag = GFX_TAG_CALL_WINDOW_EDGE,
+    .paletteTag = PAL_TAG_CALL_WINDOW,
+    .oam = &gOamData_AffineOff_ObjBlend_64x64,
+    .images = NULL, // sCall_Window_UI_Gfx,
     .callback = SpriteCallbackDummy
-};
-
-static const struct SpritePalette sSettings_Icon_SpritePalette =
-{
-    .data = sSettings_Icon_Pals,
-    .tag = PAL_TAG_ICON_SETTINGS
 };
 
 static const struct SpriteTemplate sCall_Window_UI_SpriteTemplate =
 {
     .tileTag = GFX_TAG_CALL_WINDOW_UI,
-    .paletteTag = PAL_TAG_CALL_WINDOW_UI,
+    .paletteTag = PAL_TAG_CALL_WINDOW,
     .oam = &gOamData_AffineOff_ObjBlend_64x32,
     .images = NULL, // sCall_Window_UI_Gfx,
     .callback = SpriteCallbackDummy
 };
 
-static const struct SpritePalette sCall_Window_UI_SpritePalette =
+static const struct SpriteTemplate sCall_Window_Scalable_SpriteTemplate =
 {
-    .data = sCall_Window_UI_Pals,
-    .tag = PAL_TAG_CALL_WINDOW_UI
+    .tileTag = GFX_TAG_CALL_WINDOW_SCALABLE,
+    .paletteTag = PAL_TAG_CALL_WINDOW,
+    .oam = &gOamData_AffineOff_ObjBlend_32x16,
+    .images = NULL, // sCall_Window_UI_Gfx,
+    .callback = SpriteCallbackDummy
+};
+
+static const struct SpritePalette sCall_Window_SpritePalette =
+{
+    .data = sCall_Window_Pals,
+    .tag = PAL_TAG_CALL_WINDOW
 };
 
 static const struct MenuAction sMenuActions_Gender[] = {
@@ -435,6 +518,7 @@ static void LoadMainMenuWindowFrameTiles(u8 bgId, u16 tileOffset)
 #define tCameraIconSpriteId         data[10]
 #define tSettingsIconSpriteId       data[11]
 #define tCallWindowUISpriteId       data[11]
+#define tCount                  data[12]
 
 void CB2_NewGameKukuiCall_FromNewMainMenu(void)
 {
@@ -483,14 +567,16 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     taskId = CreateTask(Task_KukuiCall_GettingACall, 0);
     gTasks[taskId].tBG1HOFS = 0;
     gTasks[taskId].tPlayerSpriteId = SPRITE_NONE;
+    gTasks[taskId].tIsDoneFadingSprites = FALSE;
     gTasks[taskId].data[3] = 0xFF;
-    gTasks[taskId].tTimer = 1;
+    gTasks[taskId].tTimer = 60 * 3;
+    gTasks[taskId].tCount = 1;
     ScanlineEffect_Stop();
     ResetSpriteData();
     FreeAllSpritePalettes();
     // ResetAllPicSprites();
     AddComputerBackgroundObjects(taskId);
-    PlayBGM(MUS_ROUTE122);
+    // PlayBGM(MUS_ROUTE122);
     BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
     SetGpuReg(REG_OFFSET_WIN0H, 0);
     SetGpuReg(REG_OFFSET_WIN0V, 0);
@@ -530,7 +616,7 @@ static void AddComputerBackgroundObjects(u8 taskId)
     notificationIconSpriteId = CreateSprite(&sNotification_Icon_SpriteTemplate, 214 + 8, 1 + 8, 1);
     gSprites[notificationIconSpriteId].callback = SpriteCB_Null;
     gSprites[notificationIconSpriteId].oam.priority = 0;
-    gSprites[notificationIconSpriteId].invisible = FALSE;
+    gSprites[notificationIconSpriteId].invisible = TRUE;
     gTasks[taskId].tNotificationIconSpriteId = notificationIconSpriteId;
 
     LoadSpritePalette(&sVideo_Icon_SpritePalette);
@@ -538,28 +624,28 @@ static void AddComputerBackgroundObjects(u8 taskId)
     gSprites[videoIconSpriteId].callback = SpriteCB_Null;
     gSprites[videoIconSpriteId].oam.priority = 0;
     gSprites[videoIconSpriteId].invisible = FALSE;
-    gTasks[taskId].tNotificationIconSpriteId = videoIconSpriteId;
+    gTasks[taskId].tVideoIconSpriteId = videoIconSpriteId;
 
     LoadSpritePalette(&sCamera_Icon_SpritePalette);
     cameraIconSpriteId = CreateSprite(&sCamera_Icon_SpriteTemplate, 197 + 16, 20 + 16, 1);
     gSprites[cameraIconSpriteId].callback = SpriteCB_Null;
     gSprites[cameraIconSpriteId].oam.priority = 0;
     gSprites[cameraIconSpriteId].invisible = FALSE;
-    gTasks[taskId].tNotificationIconSpriteId = cameraIconSpriteId;
+    gTasks[taskId].tCameraIconSpriteId = cameraIconSpriteId;
 
     LoadSpritePalette(&sSettings_Icon_SpritePalette);
     settingsIconSpriteId = CreateSprite(&sSettings_Icon_SpriteTemplate, 197 + 16, 41 + 16, 1);
     gSprites[settingsIconSpriteId].callback = SpriteCB_Null;
     gSprites[settingsIconSpriteId].oam.priority = 0;
     gSprites[settingsIconSpriteId].invisible = FALSE;
-    gTasks[taskId].tNotificationIconSpriteId = settingsIconSpriteId;
+    gTasks[taskId].tSettingsIconSpriteId = settingsIconSpriteId;
 
-    LoadSpritePalette(&sCall_Window_UI_SpritePalette);
+    LoadSpritePalette(&sCall_Window_SpritePalette);
     callWindowUISpriteId = CreateSprite(&sCall_Window_UI_SpriteTemplate, 0, 0, 1);
     gSprites[callWindowUISpriteId].callback = SpriteCB_Null;
     gSprites[callWindowUISpriteId].oam.priority = 0;
     gSprites[callWindowUISpriteId].invisible = TRUE;
-    gTasks[taskId].tNotificationIconSpriteId = callWindowUISpriteId;
+    gTasks[taskId].tCallWindowUISpriteId = callWindowUISpriteId;
 
     #ifndef NDEBUG
         MgbaPrintf(MGBA_LOG_ERROR, "Sprite Ids: %d, %d, %d, %d, %d", notificationIconSpriteId, videoIconSpriteId, cameraIconSpriteId, settingsIconSpriteId, callWindowUISpriteId);
@@ -573,24 +659,48 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
         MgbaPrintf(MGBA_LOG_ERROR, "Getting a Call, timer %d", gTasks[taskId].tTimer);
     #endif
 
-    if (!gTasks[taskId].tTimer)
+    // #ifndef NDEBUG
+    //     MgbaPrintf(MGBA_LOG_ERROR, "else");
+    // #endif
+
+    // if (gSprites[gTasks[taskId].tVideoIconSpriteId].animNum == 2)
+    //     gSprites[gTasks[taskId].tVideoIconSpriteId].animNum = 0;
+
+    if (gTasks[taskId].tTimer)
     {
-        //gTasks[taskId].tTimer--;
+        if (gTasks[taskId].tTimer == 120 || gTasks[taskId].tTimer == 100 || gTasks[taskId].tTimer == 80)
+        {
+            StartSpriteAnim(&gSprites[gTasks[taskId].tVideoIconSpriteId], 1);
+            PlaySE(SE_POKENAV_CALL);
+        }
+        if (gTasks[taskId].tTimer == 105 || gTasks[taskId].tTimer == 85 || gTasks[taskId].tTimer == 65)
+        {
+            m4aSongNumStop(SE_POKENAV_CALL);
+        }
+            
+        gTasks[taskId].tTimer--;
     }
     else
     {
         #ifndef NDEBUG
-            MgbaPrintf(MGBA_LOG_ERROR, "else");
+            MgbaPrintf(MGBA_LOG_ERROR, "Ring Count: %d", gTasks[taskId].tCount);
         #endif
-        // InitWindows(sNewGameKukuiCallTextWindows);
-        // LoadMainMenuWindowFrameTiles(1, 0xF3);
-        // LoadMessageBoxGfx(0, 0xFC, BG_PLTT_ID(15));
-        DrawDialogFrameWithCustomTile(0, TRUE, BIRCH_DLG_BASE_TILE_NUM);
-        DrawNamePlateWithCustomTile(3, TRUE, BIRCH_DLG_BASE_TILE_NUM);
-        StringExpandPlaceholders(gStringVar4, gText_Birch_Welcome);
-        NewGameKukuiCall_PrintDialogue();
-        // gTasks[taskId].func = Task_NewGameBirchSpeech_ThisIsAPokemon;
-        gTasks[taskId].tTimer--;
+        if (gTasks[taskId].tCount == 3)
+        {
+            LoadMainMenuWindowFrameTiles(1, 0xF3);
+            LoadMessageBoxGfx(0, 0xFC, BG_PLTT_ID(15));
+            DrawDialogFrameWithCustomTile(0, TRUE, BIRCH_DLG_BASE_TILE_NUM);
+            // StringExpandPlaceholders(gStringVar4, );
+            
+            // TODO - fix "\p" continue prompt using transparent color in its tiles
+            AddTextPrinterParameterized3(0, FONT_SMALL, 0, 0, sTextColor_DarkGray, 0, COMPOUND_STRING("You have a message from the Alola region's\nown Professor Kukui!\p"));
+            AddTextPrinterForMessage(TRUE);
+            // NewGameKukuiCall_PrintDialogue();
+        }
+
+        gTasks[taskId].tCount++;
+        gTasks[taskId].tTimer = 120;
+        // gTasks[taskId].func = Task_NewGameBirchSpeech_ThisIsAPokemon;   
     }
 }
 
