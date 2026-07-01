@@ -37,7 +37,7 @@ static void AddComputerBackgroundObjects(u8);
 static void Task_KukuiCall_GettingACall(u8);
 
 static void SpriteCB_Null(struct Sprite *sprite);
-static void NewGameKukuiCall_PrintDialogue(void);
+static void NewGameKukuiCall_PrintNameplate(void);
 
 extern const struct OamData gOamData_AffineOff_ObjBlend_64x64;
 extern const struct OamData gOamData_AffineOff_ObjBlend_64x32;
@@ -159,11 +159,11 @@ static const struct BgTemplate sBgTemplates[] =
     {
         .bg = 3,
         .charBaseIndex = 0,
-        .mapBaseIndex = 8,
+        .mapBaseIndex = 31,
         .screenSize = 0,
         .paletteMode = 0,
         .priority = 3,
-        .baseTile = 292
+        .baseTile = 0
     }
 };
 
@@ -180,30 +180,12 @@ static const struct WindowTemplate sNewGameKukuiCallTextWindows[] =
     },
     {
         .bg = 1,
-        .tilemapLeft = 3,
-        .tilemapTop = 5,
-        .width = 6,
-        .height = 4,
-        .paletteNum = 15,
-        .baseBlock = 0x6D
-    },
-    {
-        .bg = 1,
-        .tilemapLeft = 3,
-        .tilemapTop = 2,
-        .width = 9,
-        .height = 10,
-        .paletteNum = 15,
-        .baseBlock = 0x85
-    },
-    {
-        .bg = 1,
         .tilemapLeft = 1,
         .tilemapTop = 13,
         .width = DLW_WIN_PLATE_SIZE,
         .height = 2,
         .paletteNum = 15,
-        .baseBlock = 0x114,
+        .baseBlock = 0x81,
     },
     DUMMY_WIN_TEMPLATE
 };
@@ -485,7 +467,7 @@ static const u8 *const sFemalePresetNames[] = {
 // If they aren't, the smaller of the two sizes will be used and any extra names will be ignored.
 #define NUM_PRESET_NAMES min(ARRAY_COUNT(sMalePresetNames), ARRAY_COUNT(sFemalePresetNames))
 
-#define BIRCH_DLG_BASE_TILE_NUM 0xFC
+#define BIRCH_DLG_BASE_TILE_NUM 0x69
 
 static void CB2_KukuiCall(void)
 {
@@ -551,16 +533,16 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     DmaFill32(3, 0, OAM, OAM_SIZE);
     DmaFill16(3, 0, PLTT, PLTT_SIZE);
     ResetPaletteFade();
-    DecompressDataWithHeaderVram(sComputer_Background_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * 0x124));
-    DecompressDataWithHeaderVram(sComputer_Background_Tilemap, (u8 *)(BG_SCREEN_ADDR(8)));
+    DecompressDataWithHeaderVram(sComputer_Background_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * 0x91));
+    DecompressDataWithHeaderVram(sComputer_Background_Tilemap, (u8 *)(BG_SCREEN_ADDR(31)));
 
-    // for(u16 i = 0; i < sizeof(sComputer_Background_Tilemap) / 2; i++)
-    // {
-    //     u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(8));
-    //     u16 tileIndex = tilemapPtr[i] & 0x3ff;
-    //     tileIndex += 0x124;
-    //     tilemapPtr[i] = (tilemapPtr[i] & ~0x3ff) | tileIndex;
-    // }
+    for(u16 i = 0; i < (32 * 32); i++)
+    {
+        u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(31));
+        u16 tileIndex = tilemapPtr[i] & 0x3ff;
+        tileIndex += 0x91;
+        tilemapPtr[i] = (tilemapPtr[i] & ~0x3ff) | tileIndex;
+    }
 
     LoadPalette(sComputer_Background_Pals, BG_PLTT_ID(0), sizeof(sComputer_Background_Pals));
     ResetTasks();
@@ -592,8 +574,7 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     SetVBlankCallback(VBlankCB_KukuiCall);
     SetMainCallback2(CB2_KukuiCall);
     InitWindows(sNewGameKukuiCallTextWindows);
-    LoadMainMenuWindowFrameTiles(1, 0xF3);
-    LoadMessageBoxGfx(0, 0xFC, BG_PLTT_ID(15));
+    LoadMessageBoxGfx(0, BIRCH_DLG_BASE_TILE_NUM, BG_PLTT_ID(15));
     PutWindowTilemap(0);
     CopyWindowToVram(0, COPYWIN_FULL);
 }
@@ -653,6 +634,8 @@ static void AddComputerBackgroundObjects(u8 taskId)
     #endif
 }
 
+static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId);
+
 static void Task_KukuiCall_GettingACall(u8 taskId)
 {
     #ifndef NDEBUG
@@ -687,33 +670,30 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
         #endif
         if (gTasks[taskId].tCount == 3)
         {
-            LoadMainMenuWindowFrameTiles(1, 0xF3);
-            LoadMessageBoxGfx(0, 0xFC, BG_PLTT_ID(15));
             DrawDialogFrameWithCustomTile(0, TRUE, BIRCH_DLG_BASE_TILE_NUM);
-            // StringExpandPlaceholders(gStringVar4, );
+            NewGameKukuiCall_PrintNameplate();
             
-            // TODO - fix "\p" continue prompt using transparent color in its tiles
-            AddTextPrinterParameterized3(0, FONT_SMALL, 0, 0, sTextColor_DarkGray, 0, COMPOUND_STRING("You have a message from the Alola region's\nown Professor Kukui!\p"));
+            StringExpandPlaceholders(gStringVar4, COMPOUND_STRING("You have a message from the Alola\nregion's own Professor Kukui!\p"));
             AddTextPrinterForMessage(TRUE);
-            // NewGameKukuiCall_PrintDialogue();
+
+            gTasks[taskId].func = Task_NewGameBirchSpeech_ThisIsAPokemon;   
         }
 
         gTasks[taskId].tCount++;
         gTasks[taskId].tTimer = 120;
-        // gTasks[taskId].func = Task_NewGameBirchSpeech_ThisIsAPokemon;   
     }
 }
 
-// static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId)
-// {
-//     if (!gPaletteFade.active && !RunTextPrintersAndIsPrinter0Active())
-//     {
-//         gTasks[taskId].func = Task_NewGameBirchSpeech_MainSpeech;
-//         StringExpandPlaceholders(gStringVar4, gText_ThisIsAPokemon);
-//         AddTextPrinterWithCallbackForMessage(TRUE, NewGameBirchSpeech_WaitForThisIsPokemonText);
-//         sKukuiCallMainTaskId = taskId;
-//     }
-// }
+static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId)
+{
+    if (!gPaletteFade.active && !RunTextPrintersAndIsPrinter0Active())
+    {
+        // gTasks[taskId].func = Task_NewGameBirchSpeech_MainSpeech;
+        // StringExpandPlaceholders(gStringVar4, gText_ThisIsAPokemon);
+        // AddTextPrinterWithCallbackForMessage(TRUE, NewGameBirchSpeech_WaitForThisIsPokemonText);
+        // sKukuiCallMainTaskId = taskId;
+    }
+}
 
 // static void Task_NewGameBirchSpeech_MainSpeech(u8 taskId)
 // {
@@ -1509,7 +1489,7 @@ static void SpriteCB_Null(struct Sprite *sprite)
 
 // #undef tTimer
 
-static void NewGameKukuiCall_PrintDialogue(void)
+static void NewGameKukuiCall_PrintNameplate(void)
 {
     int strLen;
     const u8 colors[3] = {0, 1, 14};
@@ -1530,8 +1510,8 @@ static void NewGameKukuiCall_PrintDialogue(void)
         StringExpandPlaceholders(&gNamePlateBuffer[0], gStringVar1);
     }
 
-    FillDialogFramePlate(3);
-    AddTextPrinterParameterized3(3, FONT_SMALL, 0, 0, colors, 0, gNamePlateBuffer);
+    FillDialogFramePlate(1);
+    AddTextPrinterParameterized3(1, FONT_SMALL, 0, 0, colors, 0, gNamePlateBuffer);
 
-    AddTextPrinterForMessage(TRUE);
+    DrawNamePlateWithCustomTile(1, TRUE, BIRCH_DLG_BASE_TILE_NUM);
 }
