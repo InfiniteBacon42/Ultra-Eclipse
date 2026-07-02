@@ -744,7 +744,7 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
             DrawDialogFrameWithCustomTile(0, TRUE, BIRCH_DLG_BASE_TILE_NUM);
             // NewGameKukuiCall_PrintNameplate();
             
-            StringExpandPlaceholders(gStringVar4, COMPOUND_STRING("You have a message from the Alola\nregion's own Professor Kukui!\p"));
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_YouHaveACall);
             AddTextPrinterForMessage(TRUE);
         }
 
@@ -816,7 +816,7 @@ static void Task_DisplayCallBG(u8 taskId)
 
     if (!RunTextPrintersAndIsPrinter0Active())
     {
-        StringExpandPlaceholders(gStringVar4, COMPOUND_STRING("Keep printing lots and lots of text.\nKeep printing lots and lots of text.\pKeep printing lots and lots of text.\nKeep printing lots and lots of text.\p"));
+        StringExpandPlaceholders(gStringVar4, gText_Kukui_JustASec);
         AddTextPrinterForMessage(TRUE);
     }
 }
