@@ -35,9 +35,12 @@ static u8 sKukuiCallMainTaskId;
 static void LoadMainMenuWindowFrameTiles(u8, u16);
 static void AddComputerBackgroundObjects(u8);
 static void Task_KukuiCall_GettingACall(u8);
+static void Task_DisplayCallBG(u8);
 
 static void SpriteCB_Null(struct Sprite *sprite);
 static void NewGameKukuiCall_PrintNameplate(void);
+
+extern void FastUnsafeCopy32(void *dst, const void *src, u32 size);
 
 extern const struct OamData gOamData_AffineOff_ObjBlend_64x64;
 extern const struct OamData gOamData_AffineOff_ObjBlend_64x32;
@@ -149,7 +152,7 @@ static const struct BgTemplate sBgTemplates[] =
     },
     {
         .bg = 2,
-        .charBaseIndex = 0,
+        .charBaseIndex = 1,
         .mapBaseIndex = 30,
         .screenSize = 0,
         .paletteMode = 0,
@@ -469,6 +472,12 @@ static const u8 *const sFemalePresetNames[] = {
 
 #define BIRCH_DLG_BASE_TILE_NUM 0x69
 
+#define KUKUI_1_BASE_TILE_NUM   0x091 // 0xB5
+#define KUKUI_2_BASE_TILE_NUM   0x146 // 0xB5
+#define PC_BG_BASE_TILE_NUM     0x1FB // 0x141
+#define CALL_BG_1_BASE_TILE_NUM 0x33C // 0x107
+#define CALL_BG_2_BASE_TILE_NUM 0x443 // 0x107
+
 static void CB2_KukuiCall(void)
 {
     RunTasks();
@@ -550,7 +559,18 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     DmaFill16(3, 0, PLTT, PLTT_SIZE);
     ResetPaletteFade();
 
-    LoadTilesMapAndPalAtOffset(0, sComputer_Background_Tiles, 0x91, sComputer_Background_Tilemap, 31, sComputer_Background_Pals, 0);
+    DecompressDataWithHeaderVram(sComputer_Background_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * PC_BG_BASE_TILE_NUM));
+    DecompressDataWithHeaderVram(sComputer_Background_Tilemap, (u8 *)(BG_SCREEN_ADDR(31)));
+
+    for(u16 i = 0; i < (32 * 32); i++)
+    {
+        u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(31));
+        u16 tileIndex = tilemapPtr[i] & 0x3ff;
+        tileIndex += PC_BG_BASE_TILE_NUM;
+        tilemapPtr[i] = (tilemapPtr[i] & ~0x3ff) | tileIndex;
+    }
+
+    LoadPalette(sComputer_Background_Pals, BG_PLTT_ID(0), sizeof(sComputer_Background_Pals));
 
     ResetTasks();
     taskId = CreateTask(Task_KukuiCall_GettingACall, 0);
@@ -573,9 +593,9 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     SetGpuReg(REG_OFFSET_BLDCNT, 0);
     SetGpuReg(REG_OFFSET_BLDALPHA, 0);
     SetGpuReg(REG_OFFSET_BLDY, 0);
-    ShowBg(0);
+    // ShowBg(0);
     ShowBg(1);
-    ShowBg(2);
+    // ShowBg(2);
     ShowBg(3);
     SetVBlankCallback(VBlankCB_KukuiCall);
     SetMainCallback2(CB2_KukuiCall);
@@ -637,23 +657,22 @@ static void AddComputerBackgroundObjects(u8 taskId)
     gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowCornerSpriteId].oam.priority = 1;
     gSprites[callWindowCornerSpriteId].invisible = FALSE;
+
     callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 160, 32, 1);
     gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowCornerSpriteId].oam.priority = 1;
-    gSprites[callWindowCornerSpriteId].hFlip = TRUE;
     SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], TRUE, FALSE);
     gSprites[callWindowCornerSpriteId].invisible = FALSE;
+
     callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 160, 96, 1);
     gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowCornerSpriteId].oam.priority = 1;
-    gSprites[callWindowCornerSpriteId].hFlip = TRUE;
-    gSprites[callWindowCornerSpriteId].vFlip = TRUE;
     SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], TRUE, TRUE);
     gSprites[callWindowCornerSpriteId].invisible = FALSE;
+
     callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 32, 96, 1);
     gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowCornerSpriteId].oam.priority = 1;
-    gSprites[callWindowCornerSpriteId].vFlip = TRUE;
     SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], FALSE, TRUE);
     gSprites[callWindowCornerSpriteId].invisible = FALSE;
     gTasks[taskId].tCallWindowCornerSpriteId = callWindowCornerSpriteId;
@@ -662,10 +681,11 @@ static void AddComputerBackgroundObjects(u8 taskId)
     gSprites[callWindowEdgeSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowEdgeSpriteId].oam.priority = 1;
     gSprites[callWindowEdgeSpriteId].invisible = FALSE;
-    callWindowEdgeSpriteId = CreateSprite(&sCall_Window_Edge_SpriteTemplate, 96, 80, 1);
+
+    callWindowEdgeSpriteId = CreateSprite(&sCall_Window_Edge_SpriteTemplate, 96, 80 + 32, 1);
     gSprites[callWindowEdgeSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowEdgeSpriteId].oam.priority = 1;
-    gSprites[callWindowCornerSpriteId].vFlip = TRUE;
+    SetSpriteOamFlipBits(&gSprites[callWindowEdgeSpriteId], FALSE, TRUE);
     gSprites[callWindowEdgeSpriteId].invisible = FALSE;
     gTasks[taskId].tCallWindowEdgeSpriteId = callWindowEdgeSpriteId;
     
@@ -690,7 +710,7 @@ static void AddComputerBackgroundObjects(u8 taskId)
 static void Task_KukuiCall_GettingACall(u8 taskId)
 {
     #ifndef NDEBUG
-        MgbaPrintf(MGBA_LOG_ERROR, "Getting a Call, timer %d", gTasks[taskId].tTimer);
+        // MgbaPrintf(MGBA_LOG_ERROR, "Getting a Call, timer %d", gTasks[taskId].tTimer);
     #endif
 
     // #ifndef NDEBUG
@@ -717,7 +737,7 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
     else
     {
         #ifndef NDEBUG
-            MgbaPrintf(MGBA_LOG_ERROR, "Ring Count: %d", gTasks[taskId].tCount);
+            // MgbaPrintf(MGBA_LOG_ERROR, "Ring Count: %d", gTasks[taskId].tCount);
         #endif
         if (gTasks[taskId].tCount == 3)
         {
@@ -736,9 +756,96 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
     {
         if (!RunTextPrintersAndIsPrinter0Active())
         {
-            // Go to next tasks
+            gTasks[taskId].tCount = 0;
+            gTasks[taskId].func = Task_DisplayCallBG;
         }
     }
+}
+
+static void Task_DisplayCallBG(u8 taskId)
+{
+    if (!gTasks[taskId].tCount)
+    {
+        LoadPalette(sCall_Background_Pals, BG_PLTT_ID(1), sizeof(sCall_Background_Pals));
+
+        DecompressDataWithHeaderVram(sCall_Background1_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * CALL_BG_1_BASE_TILE_NUM));
+        DecompressDataWithHeaderVram(sCall_Background1_Tilemap, (u8 *)(BG_SCREEN_ADDR(27)));
+
+        for(u16 i = 0; i < (32 * 32); i++)
+        {
+            u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(27));
+            u16 tileIndex = tilemapPtr[i] & 0x3ff;
+            tileIndex += CALL_BG_1_BASE_TILE_NUM - 0x200;
+            tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (1 << 12);
+        }
+
+        SetBgAttribute(2, BG_ATTR_MAPBASEINDEX, 27);
+
+
+        LoadPalette(sKukui_Pals, BG_PLTT_ID(2), sizeof(sKukui_Pals));
+
+        DecompressDataWithHeaderVram(sKukui2_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * KUKUI_1_BASE_TILE_NUM));
+        DecompressDataWithHeaderVram(sKukui2_Tilemap, (u8 *)(BG_SCREEN_ADDR(26)));
+
+        for(u16 i = 0; i < (32 * 14); i++)
+        {
+            u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(26));
+            u16 tileIndex = tilemapPtr[i] & 0x3ff;
+            tileIndex += KUKUI_1_BASE_TILE_NUM;
+            tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (2 << 12);
+        }
+
+        FastUnsafeCopy32((u8 *)(BG_SCREEN_ADDR(26) + (32 * 14 * 2)), (u8 *)(BG_SCREEN_ADDR(29) + (32 * 14 * 2)), 6 * 32 * 2);
+
+        SetBgAttribute(1, BG_ATTR_MAPBASEINDEX, 26);
+
+
+        ShowBg(2);
+        ShowBg(1);
+    }
+    else if (gTasks[taskId].tCount == 60)
+    {
+        LoadPalette(sCall_Background_Pals, BG_PLTT_ID(1), sizeof(sCall_Background_Pals));
+
+        DecompressDataWithHeaderVram(sCall_Background2_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * CALL_BG_2_BASE_TILE_NUM));
+        DecompressDataWithHeaderVram(sCall_Background2_Tilemap, (u8 *)(BG_SCREEN_ADDR(30)));
+
+        for(u16 i = 0; i < (32 * 32); i++)
+        {
+            u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(30));
+            u16 tileIndex = tilemapPtr[i] & 0x3ff;
+            tileIndex += CALL_BG_2_BASE_TILE_NUM - 0x200;
+            tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (1 << 12);
+        }
+
+        SetBgAttribute(2, BG_ATTR_MAPBASEINDEX, 30);
+
+
+        LoadPalette(sKukui_Pals, BG_PLTT_ID(2), sizeof(sKukui_Pals));
+
+        DecompressDataWithHeaderVram(sKukui3_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * KUKUI_2_BASE_TILE_NUM));
+        DecompressDataWithHeaderVram(sKukui3_Tilemap, (u8 *)(BG_SCREEN_ADDR(29)));
+
+        for(u16 i = 0; i < (32 * 14); i++)
+        {
+            u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(29));
+            u16 tileIndex = tilemapPtr[i] & 0x3ff;
+            tileIndex += KUKUI_2_BASE_TILE_NUM;
+            tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (2 << 12);
+        }
+
+        SetBgAttribute(1, BG_ATTR_MAPBASEINDEX, 29);
+
+
+        ShowBg(2);
+        ShowBg(1);
+    }
+    else if (gTasks[taskId].tCount == 120)
+    {
+        gTasks[taskId].tCount = -1;
+    }
+
+    gTasks[taskId].tCount++;
 }
 
 // static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId)
