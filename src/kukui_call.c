@@ -664,13 +664,13 @@ static void AddComputerBackgroundObjects(u8 taskId)
     SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], TRUE, FALSE);
     gSprites[callWindowCornerSpriteId].invisible = FALSE;
 
-    callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 160, 96, 1);
+    callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 160, 88, 1);
     gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowCornerSpriteId].oam.priority = 1;
     SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], TRUE, TRUE);
     gSprites[callWindowCornerSpriteId].invisible = FALSE;
 
-    callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 32, 96, 1);
+    callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 32, 88, 1);
     gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowCornerSpriteId].oam.priority = 1;
     SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], FALSE, TRUE);
@@ -682,7 +682,7 @@ static void AddComputerBackgroundObjects(u8 taskId)
     gSprites[callWindowEdgeSpriteId].oam.priority = 1;
     gSprites[callWindowEdgeSpriteId].invisible = FALSE;
 
-    callWindowEdgeSpriteId = CreateSprite(&sCall_Window_Edge_SpriteTemplate, 96, 80 + 32, 1);
+    callWindowEdgeSpriteId = CreateSprite(&sCall_Window_Edge_SpriteTemplate, 96, 104, 1);
     gSprites[callWindowEdgeSpriteId].callback = SpriteCB_Null;
     gSprites[callWindowEdgeSpriteId].oam.priority = 1;
     SetSpriteOamFlipBits(&gSprites[callWindowEdgeSpriteId], FALSE, TRUE);
