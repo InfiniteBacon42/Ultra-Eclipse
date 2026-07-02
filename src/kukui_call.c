@@ -375,7 +375,7 @@ static const struct SpriteTemplate sCall_Window_Corner_SpriteTemplate =
     .tileTag = GFX_TAG_CALL_WINDOW_CORNER,
     .paletteTag = PAL_TAG_CALL_WINDOW,
     .oam = &gOamData_AffineOff_ObjBlend_64x64,
-    .images = NULL, // sCall_Window_UI_Gfx,
+    .images = NULL, // sCall_Window_Corner_Gfx,
     .callback = SpriteCallbackDummy
 };
 
@@ -383,8 +383,8 @@ static const struct SpriteTemplate sCall_Window_Edge_SpriteTemplate =
 {
     .tileTag = GFX_TAG_CALL_WINDOW_EDGE,
     .paletteTag = PAL_TAG_CALL_WINDOW,
-    .oam = &gOamData_AffineOff_ObjBlend_64x64,
-    .images = NULL, // sCall_Window_UI_Gfx,
+    .oam = &gOamData_AffineOff_ObjBlend_64x32,
+    .images = NULL, // sCall_Window_Edge_Gfx,
     .callback = SpriteCallbackDummy
 };
 
@@ -402,7 +402,7 @@ static const struct SpriteTemplate sCall_Window_Scalable_SpriteTemplate =
     .tileTag = GFX_TAG_CALL_WINDOW_SCALABLE,
     .paletteTag = PAL_TAG_CALL_WINDOW,
     .oam = &gOamData_AffineOff_ObjBlend_32x16,
-    .images = NULL, // sCall_Window_UI_Gfx,
+    .images = NULL, // sCall_Window_Scalable_Gfx,
     .callback = SpriteCallbackDummy
 };
 
@@ -490,27 +490,43 @@ static void LoadMainMenuWindowFrameTiles(u8 bgId, u16 tileOffset)
     LoadPalette(GetWindowFrameTilesPal(gSaveBlock2Ptr->optionsWindowFrameType)->pal, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
 }
 
-#define tPlayerSpriteId         data[2]
+#define tTimer                  data[0]
+#define tCount                  data[1]
+#define tFreeTilesOffset        data[2]
+#define tPlayerSpriteId         data[3]
 #define tBG1HOFS                data[4]
 #define tIsDoneFadingSprites    data[5]
 #define tPlayerGender           data[6]
-#define tTimer                  data[7]
-#define tNotificationIconSpriteId   data[8]
-#define tVideoIconSpriteId          data[9]
-#define tCameraIconSpriteId         data[10]
-#define tSettingsIconSpriteId       data[11]
-#define tCallWindowUISpriteId       data[11]
-#define tCount                  data[12]
+#define tSettingsIconSpriteId       data[7]
+#define tCameraIconSpriteId         data[8]
+#define tNotificationIconSpriteId   data[9]
+#define tVideoIconSpriteId          data[10]
+#define tCallWindowCornerSpriteId   data[11]
+#define tCallWindowEdgeSpriteId     data[12]
+#define tCallWindowUISpriteId       data[13]
+#define tCallWindowScalableSpriteId data[14]
+
+static void LoadTilesMapAndPalAtOffset(u8 taskId, const u32 *tiles, u16 tilesOffset, const u32 *tilemap, u16 tilemapOffset, const void* pal, u16 palOffset)
+{
+    DecompressDataWithHeaderVram(tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * tilesOffset));
+    DecompressDataWithHeaderVram(tilemap, (u8 *)(BG_SCREEN_ADDR(tilemapOffset)));
+
+    for(u16 i = 0; i < (32 * 32); i++)
+    {
+        u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(tilemapOffset));
+        u16 tileIndex = tilemapPtr[i] & 0x3ff;
+        tileIndex += tilesOffset;
+        tilemapPtr[i] = (tilemapPtr[i] & ~0x3ff) | tileIndex;
+    }
+
+    LoadPalette(pal, BG_PLTT_ID(palOffset), PLTT_SIZE_4BPP);
+}
 
 void CB2_NewGameKukuiCall_FromNewMainMenu(void)
 {
     u8 taskId;
     u8 spriteId;
     u16 savedIme;
-
-    #ifndef NDEBUG
-        MgbaPrintf(MGBA_LOG_ERROR, "A");
-    #endif
 
     ResetBgsAndClearDma3BusyFlags(0);
     SetGpuReg(REG_OFFSET_DISPCNT, 0);
@@ -533,24 +549,14 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     DmaFill32(3, 0, OAM, OAM_SIZE);
     DmaFill16(3, 0, PLTT, PLTT_SIZE);
     ResetPaletteFade();
-    DecompressDataWithHeaderVram(sComputer_Background_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * 0x91));
-    DecompressDataWithHeaderVram(sComputer_Background_Tilemap, (u8 *)(BG_SCREEN_ADDR(31)));
 
-    for(u16 i = 0; i < (32 * 32); i++)
-    {
-        u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(31));
-        u16 tileIndex = tilemapPtr[i] & 0x3ff;
-        tileIndex += 0x91;
-        tilemapPtr[i] = (tilemapPtr[i] & ~0x3ff) | tileIndex;
-    }
+    LoadTilesMapAndPalAtOffset(0, sComputer_Background_Tiles, 0x91, sComputer_Background_Tilemap, 31, sComputer_Background_Pals, 0);
 
-    LoadPalette(sComputer_Background_Pals, BG_PLTT_ID(0), sizeof(sComputer_Background_Pals));
     ResetTasks();
     taskId = CreateTask(Task_KukuiCall_GettingACall, 0);
     gTasks[taskId].tBG1HOFS = 0;
     gTasks[taskId].tPlayerSpriteId = SPRITE_NONE;
     gTasks[taskId].tIsDoneFadingSprites = FALSE;
-    gTasks[taskId].data[3] = 0xFF;
     gTasks[taskId].tTimer = 60 * 3;
     gTasks[taskId].tCount = 1;
     ScanlineEffect_Stop();
@@ -581,17 +587,35 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
 
 static void AddComputerBackgroundObjects(u8 taskId)
 {
+    u8 settingsIconSpriteId;
+    u8 cameraIconSpriteId;
     u8 notificationIconSpriteId;
     u8 videoIconSpriteId;
-    u8 cameraIconSpriteId;
-    u8 settingsIconSpriteId;
-    u8 callWindowUISpriteId;
+    u8 callWindowCornerSpriteId, callWindowEdgeSpriteId, callWindowUISpriteId, callWindowScalableSpriteId;
 
+    LoadCompressedSpriteSheet(&sSettings_Icon_SpriteSheet);
+    LoadCompressedSpriteSheet(&sCamera_Icon_SpriteSheet);
     LoadCompressedSpriteSheet(&sNotification_Icon_SpriteSheet);
     u32 temp = LoadCompressedSpriteSheetByTemplate(&sVideo_Icon_SpriteTemplate, 0);
-    LoadCompressedSpriteSheet(&sCamera_Icon_SpriteSheet);
-    LoadCompressedSpriteSheet(&sSettings_Icon_SpriteSheet);
+    
+    LoadCompressedSpriteSheet(&sCall_Window_Corner_SpriteSheet);
+    LoadCompressedSpriteSheet(&sCall_Window_Edge_SpriteSheet);
     LoadCompressedSpriteSheet(&sCall_Window_UI_SpriteSheet);
+    LoadCompressedSpriteSheet(&sCall_Window_Scalable_SpriteSheet);
+
+    LoadSpritePalette(&sSettings_Icon_SpritePalette);
+    settingsIconSpriteId = CreateSprite(&sSettings_Icon_SpriteTemplate, 197 + 16, 41 + 16, 1);
+    gSprites[settingsIconSpriteId].callback = SpriteCB_Null;
+    gSprites[settingsIconSpriteId].oam.priority = 0;
+    gSprites[settingsIconSpriteId].invisible = FALSE;
+    gTasks[taskId].tSettingsIconSpriteId = settingsIconSpriteId;
+    
+    LoadSpritePalette(&sCamera_Icon_SpritePalette);
+    cameraIconSpriteId = CreateSprite(&sCamera_Icon_SpriteTemplate, 197 + 16, 20 + 16, 1);
+    gSprites[cameraIconSpriteId].callback = SpriteCB_Null;
+    gSprites[cameraIconSpriteId].oam.priority = 0;
+    gSprites[cameraIconSpriteId].invisible = FALSE;
+    gTasks[taskId].tCameraIconSpriteId = cameraIconSpriteId;
 
     LoadSpritePalette(&sNotification_Icon_SpritePalette);
     notificationIconSpriteId = CreateSprite(&sNotification_Icon_SpriteTemplate, 214 + 8, 1 + 8, 1);
@@ -607,26 +631,55 @@ static void AddComputerBackgroundObjects(u8 taskId)
     gSprites[videoIconSpriteId].invisible = FALSE;
     gTasks[taskId].tVideoIconSpriteId = videoIconSpriteId;
 
-    LoadSpritePalette(&sCamera_Icon_SpritePalette);
-    cameraIconSpriteId = CreateSprite(&sCamera_Icon_SpriteTemplate, 197 + 16, 20 + 16, 1);
-    gSprites[cameraIconSpriteId].callback = SpriteCB_Null;
-    gSprites[cameraIconSpriteId].oam.priority = 0;
-    gSprites[cameraIconSpriteId].invisible = FALSE;
-    gTasks[taskId].tCameraIconSpriteId = cameraIconSpriteId;
-
-    LoadSpritePalette(&sSettings_Icon_SpritePalette);
-    settingsIconSpriteId = CreateSprite(&sSettings_Icon_SpriteTemplate, 197 + 16, 41 + 16, 1);
-    gSprites[settingsIconSpriteId].callback = SpriteCB_Null;
-    gSprites[settingsIconSpriteId].oam.priority = 0;
-    gSprites[settingsIconSpriteId].invisible = FALSE;
-    gTasks[taskId].tSettingsIconSpriteId = settingsIconSpriteId;
-
     LoadSpritePalette(&sCall_Window_SpritePalette);
-    callWindowUISpriteId = CreateSprite(&sCall_Window_UI_SpriteTemplate, 0, 0, 1);
+    
+    callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 32, 32, 1);
+    gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
+    gSprites[callWindowCornerSpriteId].oam.priority = 1;
+    gSprites[callWindowCornerSpriteId].invisible = FALSE;
+    callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 160, 32, 1);
+    gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
+    gSprites[callWindowCornerSpriteId].oam.priority = 1;
+    gSprites[callWindowCornerSpriteId].hFlip = TRUE;
+    SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], TRUE, FALSE);
+    gSprites[callWindowCornerSpriteId].invisible = FALSE;
+    callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 160, 96, 1);
+    gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
+    gSprites[callWindowCornerSpriteId].oam.priority = 1;
+    gSprites[callWindowCornerSpriteId].hFlip = TRUE;
+    gSprites[callWindowCornerSpriteId].vFlip = TRUE;
+    SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], TRUE, TRUE);
+    gSprites[callWindowCornerSpriteId].invisible = FALSE;
+    callWindowCornerSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 32, 96, 1);
+    gSprites[callWindowCornerSpriteId].callback = SpriteCB_Null;
+    gSprites[callWindowCornerSpriteId].oam.priority = 1;
+    gSprites[callWindowCornerSpriteId].vFlip = TRUE;
+    SetSpriteOamFlipBits(&gSprites[callWindowCornerSpriteId], FALSE, TRUE);
+    gSprites[callWindowCornerSpriteId].invisible = FALSE;
+    gTasks[taskId].tCallWindowCornerSpriteId = callWindowCornerSpriteId;
+    
+    callWindowEdgeSpriteId = CreateSprite(&sCall_Window_Edge_SpriteTemplate, 96, 16, 1);
+    gSprites[callWindowEdgeSpriteId].callback = SpriteCB_Null;
+    gSprites[callWindowEdgeSpriteId].oam.priority = 1;
+    gSprites[callWindowEdgeSpriteId].invisible = FALSE;
+    callWindowEdgeSpriteId = CreateSprite(&sCall_Window_Edge_SpriteTemplate, 96, 80, 1);
+    gSprites[callWindowEdgeSpriteId].callback = SpriteCB_Null;
+    gSprites[callWindowEdgeSpriteId].oam.priority = 1;
+    gSprites[callWindowCornerSpriteId].vFlip = TRUE;
+    gSprites[callWindowEdgeSpriteId].invisible = FALSE;
+    gTasks[taskId].tCallWindowEdgeSpriteId = callWindowEdgeSpriteId;
+    
+    callWindowUISpriteId = CreateSprite(&sCall_Window_UI_SpriteTemplate, 152, 16, 1);
     gSprites[callWindowUISpriteId].callback = SpriteCB_Null;
     gSprites[callWindowUISpriteId].oam.priority = 0;
-    gSprites[callWindowUISpriteId].invisible = TRUE;
+    gSprites[callWindowUISpriteId].invisible = FALSE;
     gTasks[taskId].tCallWindowUISpriteId = callWindowUISpriteId;
+
+    callWindowScalableSpriteId = CreateSprite(&sCall_Window_Scalable_SpriteTemplate, 182, 28, 1);
+    gSprites[callWindowScalableSpriteId].callback = SpriteCB_Null;
+    gSprites[callWindowScalableSpriteId].oam.priority = 0;
+    gSprites[callWindowScalableSpriteId].invisible = FALSE;
+    gTasks[taskId].tCallWindowScalableSpriteId = callWindowScalableSpriteId;
 
     #ifndef NDEBUG
         MgbaPrintf(MGBA_LOG_ERROR, "Sprite Ids: %d, %d, %d, %d, %d", notificationIconSpriteId, videoIconSpriteId, cameraIconSpriteId, settingsIconSpriteId, callWindowUISpriteId);
@@ -1229,13 +1282,21 @@ static void SpriteCB_Null(struct Sprite *sprite)
 //     return CreateMonPicSprite_Affine(SPECIES_ROCKRUFF, FALSE, 0, MON_PIC_AFFINE_FRONT, x, y, 14, TAG_NONE);
 // }
 
+#undef tTimer
+#undef tCount
+#undef tFreeTilesOffset
 #undef tPlayerSpriteId
 #undef tBG1HOFS
+#undef tIsDoneFadingSprites
 #undef tPlayerGender
-#undef tBirchSpriteId
-#undef tLotadSpriteId
-#undef tBrendanSpriteId
-#undef tMaySpriteId
+#undef tSettingsIconSpriteId
+#undef tCameraIconSpriteId
+#undef tNotificationIconSpriteId
+#undef tVideoIconSpriteId
+#undef tCallWindowCornerSpriteId
+#undef tCallWindowEdgeSpriteId
+#undef tCallWindowUISpriteId
+#undef tCallWindowScalableSpriteId
 
 // #define tMainTask data[0]
 // #define tAlphaCoeff1 data[1]
