@@ -534,6 +534,11 @@ static void LoadTilesMapAndPalAtOffset(u8 bgId, const u32 *tiles, u16 tilesOffse
     SetBgAttribute(bgId, BG_ATTR_MAPBASEINDEX, screenIndex);
 }
 
+static void CopyPartialTilemap(u32 dstScreen, u32 srcScreen, u8 startHeight, u8 rows)
+{
+    FastUnsafeCopy32((u8 *)(BG_SCREEN_ADDR(dstScreen) + (32 * startHeight * 2)), (u8 *)(BG_SCREEN_ADDR(srcScreen) + (32 * startHeight * 2)), rows * 32 * 2);
+}
+
 void CB2_NewGameKukuiCall_FromNewMainMenu(void)
 {
     u8 taskId;
@@ -761,7 +766,7 @@ static void Task_DisplayCallBG(u8 taskId)
         LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, CALL_BG_1_BASE_TILE_NUM, 1, sCall_Background1_Tilemap, 32, 27, sCall_Background_Pals, 1);
 
         LoadTilesMapAndPalAtOffset(1, sKukui2_Tiles, KUKUI_1_BASE_TILE_NUM, 0, sKukui2_Tilemap, 14, 26, sKukui_Pals, 2);
-        FastUnsafeCopy32((u8 *)(BG_SCREEN_ADDR(26) + (32 * 14 * 2)), (u8 *)(BG_SCREEN_ADDR(29) + (32 * 14 * 2)), 6 * 32 * 2);
+        CopyPartialTilemap(26, 29, 14, 6);
 
         ShowBg(2);
         ShowBg(1);
@@ -771,7 +776,7 @@ static void Task_DisplayCallBG(u8 taskId)
         LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles, CALL_BG_2_BASE_TILE_NUM, 1, sCall_Background2_Tilemap, 32, 30, sCall_Background_Pals, 1);
 
         LoadTilesMapAndPalAtOffset(1, sKukui3_Tiles, KUKUI_2_BASE_TILE_NUM, 0, sKukui3_Tilemap, 14, 29, sKukui_Pals, 2);
-        FastUnsafeCopy32((u8 *)(BG_SCREEN_ADDR(29) + (32 * 14 * 2)), (u8 *)(BG_SCREEN_ADDR(26) + (32 * 14 * 2)), 6 * 32 * 2);
+        CopyPartialTilemap(29, 26, 14, 6);
 
         ShowBg(2);
         ShowBg(1);
