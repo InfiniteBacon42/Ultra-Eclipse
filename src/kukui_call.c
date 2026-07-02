@@ -634,8 +634,6 @@ static void AddComputerBackgroundObjects(u8 taskId)
     #endif
 }
 
-static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId);
-
 static void Task_KukuiCall_GettingACall(u8 taskId)
 {
     #ifndef NDEBUG
@@ -671,29 +669,35 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
         if (gTasks[taskId].tCount == 3)
         {
             DrawDialogFrameWithCustomTile(0, TRUE, BIRCH_DLG_BASE_TILE_NUM);
-            NewGameKukuiCall_PrintNameplate();
+            // NewGameKukuiCall_PrintNameplate();
             
             StringExpandPlaceholders(gStringVar4, COMPOUND_STRING("You have a message from the Alola\nregion's own Professor Kukui!\p"));
             AddTextPrinterForMessage(TRUE);
-
-            gTasks[taskId].func = Task_NewGameBirchSpeech_ThisIsAPokemon;   
         }
 
         gTasks[taskId].tCount++;
         gTasks[taskId].tTimer = 120;
     }
-}
 
-static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId)
-{
-    if (!gPaletteFade.active && !RunTextPrintersAndIsPrinter0Active())
+    if (gTasks[taskId].tCount > 3)
     {
-        // gTasks[taskId].func = Task_NewGameBirchSpeech_MainSpeech;
-        // StringExpandPlaceholders(gStringVar4, gText_ThisIsAPokemon);
-        // AddTextPrinterWithCallbackForMessage(TRUE, NewGameBirchSpeech_WaitForThisIsPokemonText);
-        // sKukuiCallMainTaskId = taskId;
+        if (!RunTextPrintersAndIsPrinter0Active())
+        {
+            // Go to next tasks
+        }
     }
 }
+
+// static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId)
+// {
+//     if (!gPaletteFade.active && !RunTextPrintersAndIsPrinter0Active())
+//     {
+//         gTasks[taskId].func = Task_NewGameBirchSpeech_MainSpeech;
+//         StringExpandPlaceholders(gStringVar4, gText_ThisIsAPokemon);
+//         AddTextPrinterWithCallbackForMessage(TRUE, NewGameBirchSpeech_WaitForThisIsPokemonText);
+//         sKukuiCallMainTaskId = taskId;
+//     }
+// }
 
 // static void Task_NewGameBirchSpeech_MainSpeech(u8 taskId)
 // {
