@@ -515,20 +515,23 @@ static void LoadMainMenuWindowFrameTiles(u8 bgId, u16 tileOffset)
 #define tCallWindowUISpriteId       data[13]
 #define tCallWindowScalableSpriteId data[14]
 
-static void LoadTilesMapAndPalAtOffset(u8 taskId, const u32 *tiles, u16 tilesOffset, const u32 *tilemap, u16 tilemapOffset, const void* pal, u16 palOffset)
+static void LoadTilesMapAndPalAtOffset(u8 bgId, const u32 *tiles, u16 tilesOffset, u8 charBaseIndex, const u32 *tilemap, u8 tilemapHeight, u16 screenIndex, const void* pal, u16 palOffset)
 {
     DecompressDataWithHeaderVram(tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * tilesOffset));
-    DecompressDataWithHeaderVram(tilemap, (u8 *)(BG_SCREEN_ADDR(tilemapOffset)));
+    DecompressDataWithHeaderVram(tilemap, (u8 *)(BG_SCREEN_ADDR(screenIndex)));
 
-    for(u16 i = 0; i < (32 * 32); i++)
+    for(u16 i = 0; i < (32 * tilemapHeight); i++)
     {
-        u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(tilemapOffset));
-        u16 tileIndex = tilemapPtr[i] & 0x3ff;
-        tileIndex += tilesOffset;
-        tilemapPtr[i] = (tilemapPtr[i] & ~0x3ff) | tileIndex;
+        u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(screenIndex));
+        u16 tileIndex = tilemapPtr[i] & 0x03FF;
+        tileIndex += tilesOffset - (charBaseIndex * 0x200);
+        tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (palOffset << 12);
     }
 
     LoadPalette(pal, BG_PLTT_ID(palOffset), PLTT_SIZE_4BPP);
+
+    SetBgAttribute(bgId, BG_ATTR_CHARBASEINDEX, charBaseIndex);
+    SetBgAttribute(bgId, BG_ATTR_MAPBASEINDEX, screenIndex);
 }
 
 void CB2_NewGameKukuiCall_FromNewMainMenu(void)
@@ -559,18 +562,7 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     DmaFill16(3, 0, PLTT, PLTT_SIZE);
     ResetPaletteFade();
 
-    DecompressDataWithHeaderVram(sComputer_Background_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * PC_BG_BASE_TILE_NUM));
-    DecompressDataWithHeaderVram(sComputer_Background_Tilemap, (u8 *)(BG_SCREEN_ADDR(31)));
-
-    for(u16 i = 0; i < (32 * 32); i++)
-    {
-        u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(31));
-        u16 tileIndex = tilemapPtr[i] & 0x3ff;
-        tileIndex += PC_BG_BASE_TILE_NUM;
-        tilemapPtr[i] = (tilemapPtr[i] & ~0x3ff) | tileIndex;
-    }
-
-    LoadPalette(sComputer_Background_Pals, BG_PLTT_ID(0), sizeof(sComputer_Background_Pals));
+    LoadTilesMapAndPalAtOffset(0, sComputer_Background_Tiles, PC_BG_BASE_TILE_NUM, 0, sComputer_Background_Tilemap, 32, 31, sComputer_Background_Pals, 0);
 
     ResetTasks();
     taskId = CreateTask(Task_KukuiCall_GettingACall, 0);
@@ -766,76 +758,20 @@ static void Task_DisplayCallBG(u8 taskId)
 {
     if (!gTasks[taskId].tCount)
     {
-        LoadPalette(sCall_Background_Pals, BG_PLTT_ID(1), sizeof(sCall_Background_Pals));
+        LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, CALL_BG_1_BASE_TILE_NUM, 1, sCall_Background1_Tilemap, 32, 27, sCall_Background_Pals, 1);
 
-        DecompressDataWithHeaderVram(sCall_Background1_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * CALL_BG_1_BASE_TILE_NUM));
-        DecompressDataWithHeaderVram(sCall_Background1_Tilemap, (u8 *)(BG_SCREEN_ADDR(27)));
-
-        for(u16 i = 0; i < (32 * 32); i++)
-        {
-            u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(27));
-            u16 tileIndex = tilemapPtr[i] & 0x3ff;
-            tileIndex += CALL_BG_1_BASE_TILE_NUM - 0x200;
-            tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (1 << 12);
-        }
-
-        SetBgAttribute(2, BG_ATTR_MAPBASEINDEX, 27);
-
-
-        LoadPalette(sKukui_Pals, BG_PLTT_ID(2), sizeof(sKukui_Pals));
-
-        DecompressDataWithHeaderVram(sKukui2_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * KUKUI_1_BASE_TILE_NUM));
-        DecompressDataWithHeaderVram(sKukui2_Tilemap, (u8 *)(BG_SCREEN_ADDR(26)));
-
-        for(u16 i = 0; i < (32 * 14); i++)
-        {
-            u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(26));
-            u16 tileIndex = tilemapPtr[i] & 0x3ff;
-            tileIndex += KUKUI_1_BASE_TILE_NUM;
-            tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (2 << 12);
-        }
-
+        LoadTilesMapAndPalAtOffset(1, sKukui2_Tiles, KUKUI_1_BASE_TILE_NUM, 0, sKukui2_Tilemap, 14, 26, sKukui_Pals, 2);
         FastUnsafeCopy32((u8 *)(BG_SCREEN_ADDR(26) + (32 * 14 * 2)), (u8 *)(BG_SCREEN_ADDR(29) + (32 * 14 * 2)), 6 * 32 * 2);
-
-        SetBgAttribute(1, BG_ATTR_MAPBASEINDEX, 26);
-
 
         ShowBg(2);
         ShowBg(1);
     }
     else if (gTasks[taskId].tCount == 60)
     {
-        LoadPalette(sCall_Background_Pals, BG_PLTT_ID(1), sizeof(sCall_Background_Pals));
+        LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles, CALL_BG_2_BASE_TILE_NUM, 1, sCall_Background2_Tilemap, 32, 30, sCall_Background_Pals, 1);
 
-        DecompressDataWithHeaderVram(sCall_Background2_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * CALL_BG_2_BASE_TILE_NUM));
-        DecompressDataWithHeaderVram(sCall_Background2_Tilemap, (u8 *)(BG_SCREEN_ADDR(30)));
-
-        for(u16 i = 0; i < (32 * 32); i++)
-        {
-            u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(30));
-            u16 tileIndex = tilemapPtr[i] & 0x3ff;
-            tileIndex += CALL_BG_2_BASE_TILE_NUM - 0x200;
-            tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (1 << 12);
-        }
-
-        SetBgAttribute(2, BG_ATTR_MAPBASEINDEX, 30);
-
-
-        LoadPalette(sKukui_Pals, BG_PLTT_ID(2), sizeof(sKukui_Pals));
-
-        DecompressDataWithHeaderVram(sKukui3_Tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * KUKUI_2_BASE_TILE_NUM));
-        DecompressDataWithHeaderVram(sKukui3_Tilemap, (u8 *)(BG_SCREEN_ADDR(29)));
-
-        for(u16 i = 0; i < (32 * 14); i++)
-        {
-            u16 * tilemapPtr = (u16 *)(BG_SCREEN_ADDR(29));
-            u16 tileIndex = tilemapPtr[i] & 0x3ff;
-            tileIndex += KUKUI_2_BASE_TILE_NUM;
-            tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (2 << 12);
-        }
-
-        SetBgAttribute(1, BG_ATTR_MAPBASEINDEX, 29);
-
+        LoadTilesMapAndPalAtOffset(1, sKukui3_Tiles, KUKUI_2_BASE_TILE_NUM, 0, sKukui3_Tilemap, 14, 29, sKukui_Pals, 2);
+        FastUnsafeCopy32((u8 *)(BG_SCREEN_ADDR(29) + (32 * 14 * 2)), (u8 *)(BG_SCREEN_ADDR(26) + (32 * 14 * 2)), 6 * 32 * 2);
 
         ShowBg(2);
         ShowBg(1);
