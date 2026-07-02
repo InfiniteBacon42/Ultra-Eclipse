@@ -756,10 +756,9 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
     {
         if (!RunTextPrintersAndIsPrinter0Active())
         {
-            LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, CALL_BG_1_BASE_TILE_NUM, 1, sCall_Background1_Tilemap, 32, 27, sCall_Background_Pals, 1, FALSE);
             FillPalette(0xFFFF, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
 
-            gTasks[taskId].tCount = 0;
+            gTasks[taskId].tCount = 1;
             gTasks[taskId].func = Task_DisplayCallBG;
         }
     }
