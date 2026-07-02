@@ -515,7 +515,7 @@ static void LoadMainMenuWindowFrameTiles(u8 bgId, u16 tileOffset)
 #define tCallWindowUISpriteId       data[13]
 #define tCallWindowScalableSpriteId data[14]
 
-static void LoadTilesMapAndPalAtOffset(u8 bgId, const u32 *tiles, u16 tilesOffset, u8 charBaseIndex, const u32 *tilemap, u8 tilemapHeight, u16 screenIndex, const void* pal, u16 palOffset)
+static void LoadTilesMapAndPalAtOffset(u8 bgId, const u32 *tiles, u16 tilesOffset, u8 charBaseIndex, const u32 *tilemap, u8 tilemapHeight, u16 screenIndex, const void* pal, u16 palOffset, bool8 unfade)
 {
     DecompressDataWithHeaderVram(tiles, (u8 *)VRAM + (TILE_SIZE_4BPP * tilesOffset));
     DecompressDataWithHeaderVram(tilemap, (u8 *)(BG_SCREEN_ADDR(screenIndex)));
@@ -528,8 +528,11 @@ static void LoadTilesMapAndPalAtOffset(u8 bgId, const u32 *tiles, u16 tilesOffse
         tilemapPtr[i] = (tilemapPtr[i] & 0x0C00) | tileIndex | (palOffset << 12);
     }
 
-    LoadPalette(pal, BG_PLTT_ID(palOffset), PLTT_SIZE_4BPP);
+    FastUnsafeCopy32(&gPlttBufferUnfaded[BG_PLTT_ID(palOffset)], pal, PLTT_SIZE_4BPP);
 
+    if (unfade)
+        FastUnsafeCopy32(&gPlttBufferFaded[BG_PLTT_ID(palOffset)], pal, PLTT_SIZE_4BPP);
+    
     SetBgAttribute(bgId, BG_ATTR_CHARBASEINDEX, charBaseIndex);
     SetBgAttribute(bgId, BG_ATTR_MAPBASEINDEX, screenIndex);
 }
@@ -567,7 +570,7 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     DmaFill16(3, 0, PLTT, PLTT_SIZE);
     ResetPaletteFade();
 
-    LoadTilesMapAndPalAtOffset(0, sComputer_Background_Tiles, PC_BG_BASE_TILE_NUM, 0, sComputer_Background_Tilemap, 32, 31, sComputer_Background_Pals, 0);
+    LoadTilesMapAndPalAtOffset(0, sComputer_Background_Tiles, PC_BG_BASE_TILE_NUM, 0, sComputer_Background_Tilemap, 32, 31, sComputer_Background_Pals, 0, TRUE);
 
     ResetTasks();
     taskId = CreateTask(Task_KukuiCall_GettingACall, 0);
@@ -753,6 +756,9 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
     {
         if (!RunTextPrintersAndIsPrinter0Active())
         {
+            LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, CALL_BG_1_BASE_TILE_NUM, 1, sCall_Background1_Tilemap, 32, 27, sCall_Background_Pals, 1, FALSE);
+            FillPalette(0xFFFF, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
+
             gTasks[taskId].tCount = 0;
             gTasks[taskId].func = Task_DisplayCallBG;
         }
@@ -761,32 +767,59 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
 
 static void Task_DisplayCallBG(u8 taskId)
 {
-    if (!gTasks[taskId].tCount)
+    UpdatePaletteFade();
+
+    if (!gPaletteFade.active)
     {
-        LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, CALL_BG_1_BASE_TILE_NUM, 1, sCall_Background1_Tilemap, 32, 27, sCall_Background_Pals, 1);
+        if (!gTasks[taskId].tCount)
+        {
+            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 1)
+        {
+            LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, CALL_BG_1_BASE_TILE_NUM, 1, sCall_Background1_Tilemap, 32, 27, sCall_Background_Pals, 1, FALSE);
 
-        LoadTilesMapAndPalAtOffset(1, sKukui2_Tiles, KUKUI_1_BASE_TILE_NUM, 0, sKukui2_Tilemap, 14, 26, sKukui_Pals, 2);
-        CopyPartialTilemap(26, 29, 14, 6);
+            LoadTilesMapAndPalAtOffset(1, sKukui2_Tiles, KUKUI_1_BASE_TILE_NUM, 0, sKukui2_Tilemap, 14, 26, sKukui_Pals, 2, FALSE);
+            CopyPartialTilemap(26, 29, 14, 6);
 
-        ShowBg(2);
-        ShowBg(1);
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 2)
+        {
+            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 16, 0, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 60)
+        {
+            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 61)
+        {
+            LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles, CALL_BG_2_BASE_TILE_NUM, 1, sCall_Background2_Tilemap, 32, 30, sCall_Background_Pals, 1, FALSE);
+
+            LoadTilesMapAndPalAtOffset(1, sKukui3_Tiles, KUKUI_2_BASE_TILE_NUM, 0, sKukui3_Tilemap, 14, 29, sKukui_Pals, 2, FALSE);
+            CopyPartialTilemap(29, 26, 14, 6);
+
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 62)
+        {
+            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 16, 0, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 120)
+        {
+            gTasks[taskId].tCount = -1;
+        }
+
+        gTasks[taskId].tCount++;
     }
-    else if (gTasks[taskId].tCount == 60)
+
+    if (!RunTextPrintersAndIsPrinter0Active())
     {
-        LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles, CALL_BG_2_BASE_TILE_NUM, 1, sCall_Background2_Tilemap, 32, 30, sCall_Background_Pals, 1);
-
-        LoadTilesMapAndPalAtOffset(1, sKukui3_Tiles, KUKUI_2_BASE_TILE_NUM, 0, sKukui3_Tilemap, 14, 29, sKukui_Pals, 2);
-        CopyPartialTilemap(29, 26, 14, 6);
-
-        ShowBg(2);
-        ShowBg(1);
+        StringExpandPlaceholders(gStringVar4, COMPOUND_STRING("Keep printing lots and lots of text.\nKeep printing lots and lots of text.\pKeep printing lots and lots of text.\nKeep printing lots and lots of text.\p"));
+        AddTextPrinterForMessage(TRUE);
     }
-    else if (gTasks[taskId].tCount == 120)
-    {
-        gTasks[taskId].tCount = -1;
-    }
-
-    gTasks[taskId].tCount++;
 }
 
 // static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId)
