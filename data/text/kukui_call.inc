@@ -42,7 +42,7 @@ gText_Kukui_CoolPokemon::
 	.string "$"
 
 @ Kukui7 to Kukui8 (*maybe* a blue light and sparkles?)
-@ Kukui8 to Kukui5* (shifted 2 tiles left) and Rockruff appears (*maybe* animate it falling into frame?)
+@ Kukui8 to Kukui5a (shifted 2 tiles left) and Rockruff appears (*maybe* animate it falling into frame?)
 @ AllOver prints
 gText_Kukui_AllOver::
 	.string "You'll find 'em all over.\n"
@@ -50,7 +50,7 @@ gText_Kukui_AllOver::
 	.string "in the sky and sea…\p"
 	.string "$"
 
-@ As LoveOurPokemon prints, Kukui5* to Kukui6 and Rockruff to Rockruff* but hFlipped within the call window (alternative to even more but more faithful art)
+@ As LoveOurPokemon prints, Kukui5a to Kukui6 and Rockruff to Rockruff_a (hFlipped within the call window) (this arrangement is an alternative to needing more but more faithful art)
 @ (might like new art specifically for "I'll play with you later, so cool your jets!")
 gText_Kukui_LoveOurPokemon::
 	.string "Here in Alola we love our Pokémon,\n"
@@ -61,7 +61,7 @@ gText_Kukui_LoveOurPokemon::
 	.string "so cool your jets!\p"
 	.string "$"
 
-@ Kukui6 to Kukui5 and Rockruff* disappears
+@ Kukui6 to Kukui5 and Rockruff_a disappears
 @ AndYouAre prints
 gText_Kukui_AndYouAre::
 	.string "All right.\p" 
@@ -98,7 +98,7 @@ gText_Kukui_YourePlayer::
 	.string "here know you're on your way!\p"
 	.string "$"
 
-@ Kukui5 shifts 2 tiles left, Rockruff appears
+@ Kukui5a (shifts 2 tiles left), Rockruff appears
 gText_Kukui_AreYouReady::
 	.string "{PLAYER}{KUN}!\p"
 	.string "Yeah, that's a name that hits you like a\n"
@@ -106,8 +106,8 @@ gText_Kukui_AreYouReady::
 	.string "Can't wait to see you here in person\n"
 	.string "then, cousin!\p"
 	.string "$"
-@ Kukui5* to Kukui4* and Rockruff to Rockruff* (Rockruff hFlipped, both shifted so 1 non-empty tile-column of each is offscreen)
-@ After a beat, Rockruff disappears and Kukui4* to Kukui3
+@ Kukui5a to Kukui4a and Rockruff to Rockruff_b (Rockruff hFlipped, both shifted so 1 non-empty tile-column of each is offscreen)
+@ After a beat, Rockruff_b disappears and Kukui4a to Kukui3
 @ Another beat, Call Window closes
 @ One last beat, scene fades to black, game starts
 
