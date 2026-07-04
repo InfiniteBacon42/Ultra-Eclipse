@@ -1362,8 +1362,9 @@ static void Task_AllOver(u8 taskId)
         {
             DmaFill16(3, 0, BG_SCREEN_ADDR(gTasks[taskId].tFreeCallBgScreenIndex), 0x800);
             LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5a_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
-            LoadTilesMapAndPalAtOffset(0, sRockruff_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 0, sRockruff_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sRockruff_Pals, 3, TRUE);
+            LoadTilesMapAndPalAtOffset(0, sRockruff_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sRockruff_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sRockruff_Pals, 3, TRUE);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(gTasks[taskId].tFreeCallBgScreenIndex) + (32 * 14 * 2), 6 * 32 * 2);
             gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
 
@@ -1418,7 +1419,7 @@ static void Task_LoveOurPokemon(u8 taskId)
         else if (gTasks[taskId].tCount == 32)
         {
             LoadTilesAndMapAtOffset(1, sKukui6_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui6_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
-            LoadTilemapAtOffset(0, gTasks[taskId].tFreeCallBgBaseTileNum, 0, sRockruff_a_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, 3);
+            LoadTilemapAtOffset(0, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sRockruff_a_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, 3);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
             gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
