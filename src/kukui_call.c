@@ -967,7 +967,6 @@ static bool8 sShouldMosaic;
 #define timerEndScaling (timerStartScaling - 20)
 #define frameEndScaling (timerStartScaling - timerEndScaling)
 
-// TODO - fade scalable sprites to white during their translation and transformation
 static void Task_LaunchCall(u8 taskId)
 {
     if (!gTasks[taskId].tCount)
