@@ -1040,6 +1040,7 @@ static void Task_LaunchCall(u8 taskId)
             }
             else if (gTasks[taskId].tCount == 2)
             {
+                PlaySE(SE_POKENAV_ON);
                 BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 16, 14, RGB_WHITE);
             }
             else if (gTasks[taskId].tCount == 32)
@@ -1072,6 +1073,7 @@ static void Task_LaunchCall(u8 taskId)
             else if (gTasks[taskId].tCount == 129)
             {
                 BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
+                PlayBGM(MUS_ROUTE122);
 
                 StringExpandPlaceholders(gStringVar4, gText_Kukui_JustASec);
                 AddTextPrinterForMessage(TRUE);
@@ -1291,6 +1293,15 @@ static void Task_AllOver(u8 taskId)
         else if (gTasks[taskId].tCount == 32)
         {
             BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
+            PlaySE(SE_BALL_THROW);
+        }
+        else if (gTasks[taskId].tCount == 62)
+        {
+            PlaySE(SE_BALL_OPEN);
+        }
+        else if (gTasks[taskId].tCount == 87)
+        {
+            PlayCry_Normal(SPECIES_ROCKRUFF, 0);
         }
         else if (gTasks[taskId].tCount == 92)
         {
@@ -1391,7 +1402,11 @@ static void Task_AndYouAre(u8 taskId)
 
     if (!gTasks[taskId].tTimer && !gPaletteFade.active && !IsLayerFadeActive())
     {
-        if (gTasks[taskId].tCount == 30)
+        if (gTasks[taskId].tCount == 25)
+        {
+            PlayCry_Normal(SPECIES_ROCKRUFF, 0);
+        }
+        else if (gTasks[taskId].tCount == 30)
         {
             BeginNormalPaletteFade(1 << 3, 0, 0, 16, RGB_RED);
             BeginLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
