@@ -752,6 +752,7 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     SetGpuReg(REG_OFFSET_BLDCNT, BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG2 | BLDCNT_TGT2_BG3 | BLDCNT_EFFECT_BLEND);
     SetGpuReg(REG_OFFSET_BLDALPHA, BLDALPHA_BLEND(16, 0));
     SetGpuReg(REG_OFFSET_BLDY, 0);
+
     // ShowBg(0);
     ShowBg(1);
     ShowBg(2);
@@ -1034,6 +1035,10 @@ static void Task_LaunchCall(u8 taskId)
             LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sCall_Background1_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sCall_Background_Pals, 2, FALSE);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
 
+            SetBgAttribute(1, BG_ATTR_MOSAIC, 1);
+            SetBgAttribute(2, BG_ATTR_MOSAIC, 1);
+            SetGpuReg(REG_OFFSET_MOSAIC, (1 << 0) | (1 << 4));
+
             gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
             gTasks[taskId].tFreeCallBgBaseTileNum = USED_CALL_BG_BTN(gTasks[taskId].tFreeCallBgBaseTileNum);
             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
@@ -1073,7 +1078,14 @@ static void Task_LaunchCall(u8 taskId)
             }
             else if (gTasks[taskId].tCount == 67)
             {
-                BeginNormalPaletteFade(1 << 1 | 1 << 2, 5, 10, 0, RGB_WHITE);
+                BeginNormalPaletteFade(1 << 1 | 1 << 2, 5, 10, 4, RGB_WHITE);
+            }
+            else if (gTasks[taskId].tCount == 68)
+            {
+                SetGpuReg(REG_OFFSET_MOSAIC, 0);
+                SetBgAttribute(1, BG_ATTR_MOSAIC, 0);
+                SetBgAttribute(2, BG_ATTR_MOSAIC, 0);
+                BeginNormalPaletteFade(1 << 1 | 1 << 2, 5, 3, 0, RGB_WHITE);
             }
             else if (gTasks[taskId].tCount == 127)
             {
