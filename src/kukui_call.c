@@ -529,8 +529,8 @@ static void BeginLayerFace(u16 targets, s8 delay, u8 startY, u8 targetY)
         delay = 0;
     }
 
-    sLayerFadeDelay = delay;
-    sLayerFadeDelayCounter = delay;
+    sLayerFadeDelay = delay * 2;
+    sLayerFadeDelayCounter = delay * 2;
     sLayerFadeY = startY;
     sLayerFadeTargetY = targetY;
 
