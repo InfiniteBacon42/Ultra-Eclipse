@@ -699,6 +699,18 @@ static void CopyPartialTilemap(u32 dstScreen, u32 srcScreen, u8 startHeight, u8 
     FastUnsafeCopy32((u8 *)(BG_SCREEN_ADDR(dstScreen) + (32 * startHeight * 2)), (u8 *)(BG_SCREEN_ADDR(srcScreen) + (32 * startHeight * 2)), rows * 32 * 2);
 }
 
+static void ShowTextBoxBackground(void)
+{
+    DmaFill16(3, (TEXT_BG_TILE - 0x200) | (0xF << 12), BG_SCREEN_ADDR(CALL_BG_1_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
+    DmaFill16(3, (TEXT_BG_TILE - 0x200) | (0xF << 12), BG_SCREEN_ADDR(CALL_BG_2_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
+}
+
+static void HideTextBoxBackground(void)
+{
+    DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(CALL_BG_1_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
+    DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(CALL_BG_2_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
+}
+
 void CB2_NewGameKukuiCall_FromNewMainMenu(void)
 {
     u8 taskId;
@@ -926,8 +938,7 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
         if (gTasks[taskId].tCount == 2)
         {
             // DrawDialogFrameWithCustomTile(0, TRUE, BIRCH_DLG_BASE_TILE_NUM);
-            DmaFill16(3, (TEXT_BG_TILE - 0x200) | (0xF << 12), BG_SCREEN_ADDR(CALL_BG_1_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
-            DmaFill16(3, (TEXT_BG_TILE - 0x200) | (0xF << 12), BG_SCREEN_ADDR(CALL_BG_2_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
+            ShowTextBoxBackground();
             StringExpandPlaceholders(gStringVar4, gText_Kukui_YouHaveACall);
             AddTextPrinterForMessageKukui(TRUE);
         }
@@ -940,6 +951,7 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
     {
         if (!RunTextPrintersAndIsPrinter0Active())
         {
+            HideTextBoxBackground();
             gTasks[taskId].tTimer = 120;
             gTasks[taskId].tCount = 0;
             gTasks[taskId].func = Task_LaunchCall;
@@ -1094,6 +1106,7 @@ static void Task_LaunchCall(u8 taskId)
                 SetGpuReg(REG_OFFSET_MOSAIC, 0);
                 SetBgAttribute(1, BG_ATTR_MOSAIC, 0);
                 SetBgAttribute(2, BG_ATTR_MOSAIC, 0);
+                ShowTextBoxBackground();
                 BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
             }
             else if (gTasks[taskId].tCount == 128)
