@@ -514,6 +514,7 @@ static EWRAM_DATA u16 sLayerFadeTargetY, sLayerFadeY;
 static EWRAM_DATA u8 sLayerFadeDelay, sLayerFadeDeltaY, sLayerFadeDelayCounter;
 static EWRAM_DATA bool8 sLayerFadeDec;
 static EWRAM_DATA bool8 sShouldUpdateLayerFade;
+static EWRAM_DATA u16 sLayerFadeBldCnt;
 
 static bool8 IsLayerFadeActive()
 {
@@ -540,7 +541,7 @@ static void BeginLayerFace(u16 targets, s8 delay, u8 startY, u8 targetY)
     else
         sLayerFadeDec = TRUE;
 
-    SetGpuReg(REG_OFFSET_BLDCNT, targets | BLDCNT_EFFECT_BLEND);
+    sLayerFadeBldCnt = targets | BLDCNT_EFFECT_BLEND;
     sLayerFadeActive = FALSE;
     sShouldLayerFade = TRUE;
 }
@@ -592,6 +593,7 @@ static void UpdateLayerFade(void)
 
 static void UpdateLayerFadeRegs(void)
 {
+    REG_BLDCNT = sLayerFadeBldCnt;
     REG_BLDALPHA = BLDALPHA_BLEND(16 - sLayerFadeY, sLayerFadeY);
 }
 
@@ -616,6 +618,7 @@ static void HBlankCB_KukuiCall(void)
 
         s16 blend = ((130 - vCount) * 16) / (130 - 111);
         if (blend < 0) blend = 0;
+        REG_BLDCNT = BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG3 | BLDCNT_EFFECT_BLEND;
         REG_BLDALPHA = BLDALPHA_BLEND(16 - blend, blend);
     }
     else if (sShouldUpdateLayerFade)
