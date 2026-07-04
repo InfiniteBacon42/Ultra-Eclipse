@@ -488,6 +488,7 @@ static const u8 *const sFemalePresetNames[] = {
 #define CALL_BG_1_BASE_TILE_NUM 0x33C // 0x107
 #define CALL_BG_2_BASE_TILE_NUM 0x443 // 0x107
 #define BLANK_TILE_2            0x54A // 0x1
+#define TEXT_BG_TILE            0x54B // 0x1
 
 #define KUKUI_1_SCREEN_INDEX 29
 #define KUKUI_2_SCREEN_INDEX 26
@@ -608,17 +609,21 @@ static void VBlankCB_KukuiCall(void)
     TransferPlttBuffer();
 }
 
+#define TEXT_BG_TRANS 10
+#define TEXT_BG_START (112 - 1)
+
 static void HBlankCB_KukuiCall(void)
 {
     u16 vCount = REG_VCOUNT;
 
-    if (vCount >= 111)
+    if (vCount >= TEXT_BG_START)
     {
         sShouldUpdateLayerFade = TRUE;
 
-        s16 blend = ((130 - vCount) * 16) / (130 - 111);
+        s16 blend = (((TEXT_BG_START + TEXT_BG_TRANS) - vCount) * TEXT_BG_TRANS) / ((TEXT_BG_START + TEXT_BG_TRANS) - TEXT_BG_START);
         if (blend < 0) blend = 0;
-        REG_BLDCNT = BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG3 | BLDCNT_EFFECT_BLEND;
+        blend += (16 - TEXT_BG_TRANS);
+        REG_BLDCNT = BLDCNT_TGT1_BG2 | BLDCNT_TGT2_BG3 | BLDCNT_EFFECT_BLEND;
         REG_BLDALPHA = BLDALPHA_BLEND(16 - blend, blend);
     }
     else if (sShouldUpdateLayerFade)
@@ -719,6 +724,8 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     DmaFill16(3, 0, VRAM, VRAM_SIZE);
     DmaFill32(3, 0, OAM, OAM_SIZE);
     DmaFill16(3, 0, PLTT, PLTT_SIZE);
+    DmaFill16(3, BLANK_TILE_2 - 0x200, BG_SCREEN_ADDR(CALL_BG_1_SCREEN_INDEX), 0x800);
+    DmaFill16(3, BLANK_TILE_2 - 0x200, BG_SCREEN_ADDR(CALL_BG_2_SCREEN_INDEX), 0x800);
     ResetPaletteFade();
 
     LoadTilesMapAndPalAtOffset(0, sComputer_Background_Tiles, PC_BG_BASE_TILE_NUM, 0, sComputer_Background_Tilemap, 20, 31, sComputer_Background_Pals, 0, TRUE);
@@ -747,7 +754,7 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     SetGpuReg(REG_OFFSET_BLDY, 0);
     // ShowBg(0);
     ShowBg(1);
-    // ShowBg(2);
+    ShowBg(2);
     ShowBg(3);
     sLastVCount = -1;
     sLayerFadeActive = FALSE;
@@ -759,9 +766,16 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     EnableInterrupts(INTR_FLAG_VBLANK | INTR_FLAG_HBLANK);
     SetMainCallback2(CB2_KukuiCall);
     InitWindows(sNewGameKukuiCallTextWindows);
+    DmaFill32(3, 0xFFFFFFFF, BG_VRAM + (8 * 8 / 2) * TEXT_BG_TILE, 8 * 8 / 2);
     // LoadMessageBoxGfx(0, BIRCH_DLG_BASE_TILE_NUM, BG_PLTT_ID(15));
     PutWindowTilemap(0);
     CopyWindowToVram(0, COPYWIN_FULL);
+}
+
+static void AddTextPrinterForMessageKukui(bool8 allowSkippingDelayWithButtonPress)
+{
+    gTextFlags.canABSpeedUpPrint = allowSkippingDelayWithButtonPress;
+    AddTextPrinterParameterized2(0, FONT_NORMAL, gStringVar4, GetPlayerTextSpeedDelay(), NULL, TEXT_COLOR_LIGHT_GRAY, TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY);
 }
 
 static void AddComputerBackgroundObjects(u8 taskId)
@@ -909,9 +923,11 @@ static void Task_KukuiCall_GettingACall(u8 taskId)
     {
         if (gTasks[taskId].tCount == 2)
         {
-            DrawDialogFrameWithCustomTile(0, TRUE, BIRCH_DLG_BASE_TILE_NUM);
+            // DrawDialogFrameWithCustomTile(0, TRUE, BIRCH_DLG_BASE_TILE_NUM);
+            DmaFill16(3, (TEXT_BG_TILE - 0x200) | (0xF << 12), BG_SCREEN_ADDR(CALL_BG_1_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
+            DmaFill16(3, (TEXT_BG_TILE - 0x200) | (0xF << 12), BG_SCREEN_ADDR(CALL_BG_2_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
             StringExpandPlaceholders(gStringVar4, gText_Kukui_YouHaveACall);
-            AddTextPrinterForMessage(TRUE);
+            AddTextPrinterForMessageKukui(TRUE);
         }
 
         gTasks[taskId].tCount++;
@@ -1014,8 +1030,6 @@ static void Task_LaunchCall(u8 taskId)
             FillPalette(0xFFFF, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
             FillPalette(0xFFFF, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
 
-            DmaFill16(3, BLANK_TILE_2 - 0x200, BG_SCREEN_ADDR(CALL_BG_1_SCREEN_INDEX), 0x800);
-            DmaFill16(3, BLANK_TILE_2 - 0x200, BG_SCREEN_ADDR(CALL_BG_2_SCREEN_INDEX), 0x800);
             LoadTilesMapAndPalAtOffset(1, sKukui1_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui1_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, sKukui_Pals, 1, FALSE);
             LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sCall_Background1_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sCall_Background_Pals, 2, FALSE);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
@@ -1082,7 +1096,7 @@ static void Task_LaunchCall(u8 taskId)
                 PlayBGM(MUS_ROUTE122);
 
                 StringExpandPlaceholders(gStringVar4, gText_Kukui_JustASec);
-                AddTextPrinterForMessage(TRUE);
+                AddTextPrinterForMessageKukui(TRUE);
             }
             else if (gTasks[taskId].tCount == 189)
             {
@@ -1145,7 +1159,7 @@ static void Task_HeyThere(u8 taskId)
             BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
 
             StringExpandPlaceholders(gStringVar4, gText_Kukui_HeyThere);
-            AddTextPrinterForMessage(TRUE);
+            AddTextPrinterForMessageKukui(TRUE);
         }
         else if (gTasks[taskId].tCount == 92)
         {
@@ -1204,7 +1218,7 @@ static void Task_AlolaIsARegion(u8 taskId)
 
             gTasks[taskId].tTimer = 1;
             StringExpandPlaceholders(gStringVar4, gText_Kukui_AlolaIsARegion);
-            AddTextPrinterForMessage(TRUE);
+            AddTextPrinterForMessageKukui(TRUE);
         }
 
         gTasks[taskId].tCount++;
@@ -1243,7 +1257,7 @@ static void Task_CoolPokemon(u8 taskId)
             BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
 
             StringExpandPlaceholders(gStringVar4, gText_Kukui_CoolPokemon);
-            AddTextPrinterForMessage(TRUE);
+            AddTextPrinterForMessageKukui(TRUE);
         }
         else if (gTasks[taskId].tCount == 92)
         {
@@ -1334,7 +1348,7 @@ static void Task_AllOver(u8 taskId)
             BeginNormalPaletteFade(1 << 3, 0, 16, 0, RGB_RED);
             BeginLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
             StringExpandPlaceholders(gStringVar4, gText_Kukui_AllOver);
-            AddTextPrinterForMessage(TRUE);
+            AddTextPrinterForMessageKukui(TRUE);
             gTasks[taskId].tTimer = 1;
             ShowBg(0);
         }
@@ -1359,7 +1373,7 @@ static void Task_LoveOurPokemon(u8 taskId)
         if (gTasks[taskId].tCount == 0)
         {
             StringExpandPlaceholders(gStringVar4, gText_Kukui_LoveOurPokemon);
-            AddTextPrinterForMessage(TRUE);
+            AddTextPrinterForMessageKukui(TRUE);
         }
         else if (gTasks[taskId].tCount == 30)
         {
@@ -1441,7 +1455,7 @@ static void Task_AndYouAre(u8 taskId)
         {
             BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
             StringExpandPlaceholders(gStringVar4, gText_Kukui_AndYouAre);
-            AddTextPrinterForMessage(TRUE);
+            AddTextPrinterForMessageKukui(TRUE);
             gTasks[taskId].tTimer = 1;
         }
 
@@ -1516,7 +1530,7 @@ static void Task_TestLoop(u8 taskId)
     if (!RunTextPrintersAndIsPrinter0Active())
     {
         StringExpandPlaceholders(gStringVar4, gText_Kukui_JustASec);
-        AddTextPrinterForMessage(TRUE);
+        AddTextPrinterForMessageKukui(TRUE);
     }
 }
 
