@@ -487,6 +487,7 @@ static const u8 *const sFemalePresetNames[] = {
 #define PC_BG_BASE_TILE_NUM     0x1FB // 0x141
 #define CALL_BG_1_BASE_TILE_NUM 0x33C // 0x107
 #define CALL_BG_2_BASE_TILE_NUM 0x443 // 0x107
+#define BLANK_TILE_2            0x54A // 0x1
 
 #define KUKUI_1_SCREEN_INDEX 29
 #define KUKUI_2_SCREEN_INDEX 26
@@ -755,7 +756,7 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     EnableInterrupts(INTR_FLAG_VBLANK | INTR_FLAG_HBLANK);
     SetMainCallback2(CB2_KukuiCall);
     InitWindows(sNewGameKukuiCallTextWindows);
-    LoadMessageBoxGfx(0, BIRCH_DLG_BASE_TILE_NUM, BG_PLTT_ID(15));
+    // LoadMessageBoxGfx(0, BIRCH_DLG_BASE_TILE_NUM, BG_PLTT_ID(15));
     PutWindowTilemap(0);
     CopyWindowToVram(0, COPYWIN_FULL);
 }
@@ -1010,6 +1011,8 @@ static void Task_LaunchCall(u8 taskId)
             FillPalette(0xFFFF, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
             FillPalette(0xFFFF, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
 
+            DmaFill16(3, BLANK_TILE_2 - 0x200, BG_SCREEN_ADDR(CALL_BG_1_SCREEN_INDEX), 0x800);
+            DmaFill16(3, BLANK_TILE_2 - 0x200, BG_SCREEN_ADDR(CALL_BG_2_SCREEN_INDEX), 0x800);
             LoadTilesMapAndPalAtOffset(1, sKukui1_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui1_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, sKukui_Pals, 1, FALSE);
             LoadTilesMapAndPalAtOffset(2, sCall_Background1_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sCall_Background1_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sCall_Background_Pals, 2, FALSE);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
@@ -1309,6 +1312,7 @@ static void Task_AllOver(u8 taskId)
         }
         else if (gTasks[taskId].tCount == 93)
         {
+            DmaFill16(3, 0, BG_SCREEN_ADDR(gTasks[taskId].tFreeCallBgScreenIndex), 0x800);
             LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5a_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
             LoadTilesMapAndPalAtOffset(0, sRockruff_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 0, sRockruff_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sRockruff_Pals, 3, TRUE);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
@@ -1408,15 +1412,19 @@ static void Task_AndYouAre(u8 taskId)
         }
         else if (gTasks[taskId].tCount == 30)
         {
-            BeginNormalPaletteFade(1 << 3, 0, 0, 16, RGB_RED);
-            BeginLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
+            BeginNormalPaletteFade(1 << 3, 0, 0, 8, RGB_RED);
         }
         else if (gTasks[taskId].tCount == 31)
+        {
+            BeginNormalPaletteFade(1 << 3, 0, 9, 16, RGB_RED);
+            BeginLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
+        }
+        else if (gTasks[taskId].tCount == 32)
         {
             HideBg(0);
             BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
         }
-        else if (gTasks[taskId].tCount == 32)
+        else if (gTasks[taskId].tCount == 33)
         {
             LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
@@ -1426,7 +1434,7 @@ static void Task_AndYouAre(u8 taskId)
             ShowBg(2);
             ShowBg(1);
         }
-        else if (gTasks[taskId].tCount == 33)
+        else if (gTasks[taskId].tCount == 34)
         {
             BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
             StringExpandPlaceholders(gStringVar4, gText_Kukui_AndYouAre);
