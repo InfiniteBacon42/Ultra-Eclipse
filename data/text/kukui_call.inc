@@ -4,7 +4,7 @@
 gText_Kukui_YouHaveACall::
 	.string "You have a message from the Alola\n"
 	.string "region's own Professor Kukui!\p"
-	.string "$"
+	.string " $"
 
 @ After a beat of no ringing, the Video Call app icon is "selected", and the Call Window "launches"
 @ Via a 2-stage fade from white, Call_Background1 and Kukui1 become visible
@@ -13,7 +13,7 @@ gText_Kukui_YouHaveACall::
 gText_Kukui_JustASec::
 	.string "Hang on, now.\n"
 	.string "Gimme just a sec...\p"
-	.string "$"
+	.string " $"
 
 @ Kukui3 to Kukui4
 @ While HeyThere is printing, Kukui4 to Kukui5
@@ -21,7 +21,7 @@ gText_Kukui_HeyThere::
 	.string "Hey there! Good afternoon!\p"
 	.string "So the day has finally come that you're\n"
 	.string "moving to Alola!\p"
-	.string "$"
+	.string " $"
 
 @ Kukui5 to Kukui6
 @ As AlolaIsARegion is printing, *maybe* show some region map visual? - try to match, rotate through island maps, or go to map view scene?
@@ -31,7 +31,7 @@ gText_Kukui_AlolaIsARegion::
 	.string "That could be the reason the region is\n"
 	.string "chock full of nothin' but rare\l"
 	.string "Pokémon, yeah!\p"
-	.string "$"
+	.string " $"
 
 @ Kukui6 to Kukui5
 @ As CoolPokemon is printing, Kukui5 to Kukui7
@@ -39,7 +39,7 @@ gText_Kukui_CoolPokemon::
 	.string "There's no shortage of cool Pokémon\n"
 	.string "out here in Alola, either!\p"
 	.string "Such mysterious creatures!\p"
-	.string "$"
+	.string " $"
 
 @ Kukui7 to Kukui8 (*maybe* a blue light and sparkles?)
 @ Kukui8 to Kukui5a (shifted 2 tiles left) and Rockruff appears (*maybe* animate it falling into frame?)
@@ -48,7 +48,7 @@ gText_Kukui_AllOver::
 	.string "You'll find 'em all over.\n"
 	.string "In the grass, in the caves,\l"
 	.string "in the sky and sea…\p"
-	.string "$"
+	.string " $"
 
 @ As LoveOurPokemon prints, Kukui5a to Kukui6 and Rockruff to Rockruff_a (hFlipped within the call window) (this arrangement is an alternative to needing more but more faithful art)
 @ (might like new art specifically for "I'll play with you later, so cool your jets!")
@@ -59,7 +59,7 @@ gText_Kukui_LoveOurPokemon::
 	.string "we call ourselves Pokémon Trainers!\p"
 	.string "Rockruff! I'll play with you later,\n"
 	.string "so cool your jets!\p"
-	.string "$"
+	.string " $"
 
 @ Kukui6 to Kukui5 and Rockruff_a disappears
 @ AndYouAre prints
@@ -68,19 +68,19 @@ gText_Kukui_AndYouAre::
 	.string "I gotta ask you some questions\n"
 	.string "about yourself so I can introduce\l"
 	.string "you to everybody!\p"
-	.string "$"
+	.string " $"
 
 @ Fades to black, switches to Photo Selection screen
 @ OR just replace Call_Background2 and Kukui5 with it?
 gText_Kukui_WhichPhoto::
 	.string "So which photo should I use for your\n"
 	.string "Trainer Passport?\p" @ maybe remove the \p and just have the text visible while selecting?
-	.string "$"
+	.string " $"
 
 @ Photo Selection screen to multichoice w/ selected photo
 gText_Kukui_ChoiceOK::
 	.string "You OK with the one you chose, yeah?\p" @ multichoice stuff?
-	.string "$"
+	.string " $"
 
 @ Photo Selection screen disappears
 @ After WhatsYourName prints, switches to Naming Screen

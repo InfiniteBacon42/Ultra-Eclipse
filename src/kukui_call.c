@@ -36,6 +36,12 @@ static void LoadMainMenuWindowFrameTiles(u8, u16);
 static void AddComputerBackgroundObjects(u8);
 static void Task_KukuiCall_GettingACall(u8);
 static void Task_LaunchCall(u8);
+static void Task_HeyThere(u8);
+static void Task_AlolaIsARegion(u8);
+static void Task_CoolPokemon(u8);
+static void Task_AllOver(u8);
+static void Task_LoveOurPokemon(u8);
+static void Task_AndYouAre(u8);
 static void Task_TestLoop(u8);
 
 static void SpriteCB_Null(struct Sprite *sprite);
@@ -813,6 +819,8 @@ static void Task_LaunchCall(u8 taskId)
 {
     if (!gTasks[taskId].tCount)
     {
+        RunTextPrinters();
+
         if (gTasks[taskId].tTimer == timerStartAnim)
         {
             StartSpriteAnim(&gSprites[gTasks[taskId].tVideoIconSpriteId], 2);
@@ -939,7 +947,7 @@ static void Task_LaunchCall(u8 taskId)
                 gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
 
                 ShowBg(1);
-                // ShowBg(2);
+                ShowBg(2);
             }
             else if (gTasks[taskId].tCount == 129)
             {
@@ -979,8 +987,307 @@ static void Task_LaunchCall(u8 taskId)
         {
             gTasks[taskId].tTimer = 0;
             gTasks[taskId].tCount = 0;
-            gTasks[taskId].func = Task_TestLoop;
+            gTasks[taskId].func = Task_HeyThere;
         }
+    }
+}
+
+static void Task_HeyThere(u8 taskId)
+{
+    UpdatePaletteFade();
+
+    if (!gTasks[taskId].tTimer && !gPaletteFade.active)
+    {
+        if (gTasks[taskId].tCount == 30)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 31)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui4_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui4_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 32)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
+
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_HeyThere);
+            AddTextPrinterForMessage(TRUE);
+        }
+        else if (gTasks[taskId].tCount == 92)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 93)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 94)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
+            gTasks[taskId].tTimer = 1;
+        }
+
+        gTasks[taskId].tCount++;
+    }
+
+    if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
+    {
+        gTasks[taskId].tTimer = 0;
+        gTasks[taskId].tCount = 0;
+        gTasks[taskId].func = Task_AlolaIsARegion;
+    }
+}
+
+static void Task_AlolaIsARegion(u8 taskId)
+{
+    UpdatePaletteFade();
+
+    if (!gTasks[taskId].tTimer && !gPaletteFade.active)
+    {
+        if (gTasks[taskId].tCount == 30)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 31)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui6_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui6_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 32)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
+
+            gTasks[taskId].tTimer = 1;
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_AlolaIsARegion);
+            AddTextPrinterForMessage(TRUE);
+        }
+
+        gTasks[taskId].tCount++;
+    }
+
+    if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
+    {
+        gTasks[taskId].tTimer = 0;
+        gTasks[taskId].tCount = 0;
+        gTasks[taskId].func = Task_CoolPokemon;
+    }
+}
+
+static void Task_CoolPokemon(u8 taskId)
+{
+    UpdatePaletteFade();
+
+    if (!gTasks[taskId].tTimer && !gPaletteFade.active)
+    {
+        if (gTasks[taskId].tCount == 30)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 31)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 32)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
+
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_CoolPokemon);
+            AddTextPrinterForMessage(TRUE);
+        }
+        else if (gTasks[taskId].tCount == 92)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 93)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui7_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui7_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 94)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
+            gTasks[taskId].tTimer = 1;
+        }
+
+        gTasks[taskId].tCount++;
+    }
+
+    if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
+    {
+        gTasks[taskId].tTimer = 0;
+        gTasks[taskId].tCount = 0;
+        gTasks[taskId].func = Task_AllOver;
+    }
+}
+
+static void Task_AllOver(u8 taskId)
+{
+    UpdatePaletteFade();
+
+    if (!gTasks[taskId].tTimer && !gPaletteFade.active)
+    {
+        if (gTasks[taskId].tCount == 30)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 31)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui8_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui8_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 32)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 92)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 93)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5a_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            LoadTilesMapAndPalAtOffset(0, sRockruff_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 0, sRockruff_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sRockruff_Pals, 3, TRUE);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+        }
+        else if (gTasks[taskId].tCount == 94)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_AllOver);
+            AddTextPrinterForMessage(TRUE);
+            gTasks[taskId].tTimer = 1;
+            ShowBg(0);
+        }
+
+        gTasks[taskId].tCount++;
+    }
+
+    if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
+    {
+        gTasks[taskId].tTimer = 0;
+        gTasks[taskId].tCount = 0;
+        gTasks[taskId].func = Task_LoveOurPokemon;
+    }
+}
+
+static void Task_LoveOurPokemon(u8 taskId)
+{
+    UpdatePaletteFade();
+
+    if (!gTasks[taskId].tTimer && !gPaletteFade.active)
+    {
+        if (gTasks[taskId].tCount == 0)
+        {
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_LoveOurPokemon);
+            AddTextPrinterForMessage(TRUE);
+        }
+        else if (gTasks[taskId].tCount == 30)
+        {
+            BeginNormalPaletteFade(1 << 1 | 1 << 3, 0, 0, 16, RGB_WHITE);
+        }
+        else if (gTasks[taskId].tCount == 31)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui6_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui6_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            LoadTilemapAtOffset(0, gTasks[taskId].tFreeCallBgBaseTileNum, 0, sRockruff_a_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, 3);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+            ShowBg(0);
+        }
+        else if (gTasks[taskId].tCount == 32)
+        {
+            BeginNormalPaletteFade(1 << 1 | 1 << 3, 0, 16, 0, RGB_WHITE);
+            gTasks[taskId].tTimer = 1;
+        }
+
+        gTasks[taskId].tCount++;
+    }
+
+    if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
+    {
+        gTasks[taskId].tTimer = 0;
+        gTasks[taskId].tCount = 0;
+        gTasks[taskId].func = Task_AndYouAre;
+    }
+}
+
+static void Task_AndYouAre(u8 taskId)
+{
+    UpdatePaletteFade();
+
+    if (!gTasks[taskId].tTimer && !gPaletteFade.active)
+    {
+        if (gTasks[taskId].tCount == 30)
+        {
+            BeginNormalPaletteFade(1 << 1 | 1 << 3, 0, 0, 16, RGB_RED);
+        }
+        else if (gTasks[taskId].tCount == 31)
+        {
+            LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
+            gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            ShowBg(2);
+            ShowBg(1);
+            ShowBg(0);
+        }
+        else if (gTasks[taskId].tCount == 32)
+        {
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_AndYouAre);
+            AddTextPrinterForMessage(TRUE);
+            gTasks[taskId].tTimer = 1;
+        }
+
+        gTasks[taskId].tCount++;
+    }
+
+    if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
+    {
+        gTasks[taskId].tTimer = 0;
+        gTasks[taskId].tCount = 0;
+        gTasks[taskId].func = Task_TestLoop;
     }
 }
 
@@ -992,7 +1299,7 @@ static void Task_TestLoop(u8 taskId)
     {
         if (!gTasks[taskId].tCount)
         {
-            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 0, 16, RGB_WHITE);
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
         }
         else if (gTasks[taskId].tCount == 1)
         {
@@ -1013,23 +1320,25 @@ static void Task_TestLoop(u8 taskId)
         }
         else if (gTasks[taskId].tCount == 2)
         {
-            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 16, 0, RGB_WHITE);
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
         }
         else if (gTasks[taskId].tCount == 62)
         {
-            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 0, 16, RGB_WHITE);
+            BeginNormalPaletteFade(1 << 1, 0, 0, 16, RGB_WHITE);
         }
         else if (gTasks[taskId].tCount == 63)
         {
             LoadTilemapAtOffset(1, USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5a_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
 
+            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
             ShowBg(2);
             ShowBg(1);
         }
         else if (gTasks[taskId].tCount == 64)
         {
-            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 16, 0, RGB_WHITE);
+            BeginNormalPaletteFade(1 << 1, 0, 16, 0, RGB_WHITE);
         }
         else if (gTasks[taskId].tCount == 124)
         {
