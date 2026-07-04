@@ -989,7 +989,9 @@ static void Task_LaunchCall(u8 taskId)
         else if (gTasks[taskId].tTimer < timerStartScaling && gTasks[taskId].tTimer >= timerEndScaling)
         {
             u8 frame = frameEndScaling - (gTasks[taskId].tTimer - timerEndScaling);
-            
+
+            BlendPalette(OBJ_PLTT_ID(IndexOfSpritePaletteTag(PAL_TAG_CALL_WINDOW)) + 8, 1, 16 * frame / frameEndScaling, RGB_WHITE);
+
             // Initial Size = ~0x
             // Actual Size = 2x = 92x56 (2x2 of 46x28 sprites)
             // Final Size = 4x = 184x112 (2x2 of 92x56 sprites)
