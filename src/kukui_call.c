@@ -141,12 +141,23 @@ static const u16 sNotification_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/ico
 static const u32 sVideo_Icon_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/video_icon.png", ".4bpp.smol", "-mwidth 4 -mheight 4");
 static const u16 sVideo_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/icons/video_icon.png", ".gbapal");
 
+#define KUKUI_1_SCREEN_INDEX 29
+#define KUKUI_2_SCREEN_INDEX 28
+#define CALL_BG_1_SCREEN_INDEX 30
+#define CALL_BG_2_SCREEN_INDEX 27
+#define ROCKRUFF_SCREEN_INDEX 26
+
+#define USED_KUKUI_BTN(freeTileNum) ((freeTileNum == KUKUI_1_BASE_TILE_NUM) ? KUKUI_2_BASE_TILE_NUM : KUKUI_1_BASE_TILE_NUM)
+#define USED_CALL_BG_BTN(freeTileNum) ((freeTileNum == CALL_BG_1_BASE_TILE_NUM) ? CALL_BG_2_BASE_TILE_NUM : CALL_BG_1_BASE_TILE_NUM)
+#define USED_KUKUI_SI(freeScreenIndex) ((freeScreenIndex == KUKUI_1_SCREEN_INDEX) ? KUKUI_2_SCREEN_INDEX : KUKUI_1_SCREEN_INDEX)
+#define USED_CALL_BG_SI(freeScreenIndex) ((freeScreenIndex == CALL_BG_1_SCREEN_INDEX) ? CALL_BG_2_SCREEN_INDEX : CALL_BG_1_SCREEN_INDEX)
+
 static const struct BgTemplate sBgTemplates[] =
 {
     {
         .bg = 0,
         .charBaseIndex = 0,
-        .mapBaseIndex = 28,
+        .mapBaseIndex = ROCKRUFF_SCREEN_INDEX,
         .screenSize = 0,
         .paletteMode = 0,
         .priority = 1,
@@ -155,7 +166,7 @@ static const struct BgTemplate sBgTemplates[] =
     {
         .bg = 1,
         .charBaseIndex = 0,
-        .mapBaseIndex = 29,
+        .mapBaseIndex = KUKUI_1_SCREEN_INDEX,
         .screenSize = 0,
         .paletteMode = 0,
         .priority = 1,
@@ -164,7 +175,7 @@ static const struct BgTemplate sBgTemplates[] =
     {
         .bg = 2,
         .charBaseIndex = 1,
-        .mapBaseIndex = 30,
+        .mapBaseIndex = CALL_BG_1_SCREEN_INDEX,
         .screenSize = 0,
         .paletteMode = 0,
         .priority = 2,
@@ -490,16 +501,6 @@ static const u8 *const sFemalePresetNames[] = {
 #define CALL_BG_2_BASE_TILE_NUM 0x443 // 0x107
 #define BLANK_TILE_2            0x54A // 0x1
 #define TEXT_BG_TILE            0x54B // 0x1
-
-#define KUKUI_1_SCREEN_INDEX 29
-#define KUKUI_2_SCREEN_INDEX 26
-#define CALL_BG_1_SCREEN_INDEX 30
-#define CALL_BG_2_SCREEN_INDEX 27
-
-#define USED_KUKUI_BTN(freeTileNum) ((freeTileNum == KUKUI_1_BASE_TILE_NUM) ? KUKUI_2_BASE_TILE_NUM : KUKUI_1_BASE_TILE_NUM)
-#define USED_CALL_BG_BTN(freeTileNum) ((freeTileNum == CALL_BG_1_BASE_TILE_NUM) ? CALL_BG_2_BASE_TILE_NUM : CALL_BG_1_BASE_TILE_NUM)
-#define USED_KUKUI_SI(freeScreenIndex) ((freeScreenIndex == KUKUI_1_SCREEN_INDEX) ? KUKUI_2_SCREEN_INDEX : KUKUI_1_SCREEN_INDEX)
-#define USED_CALL_BG_SI(freeScreenIndex) ((freeScreenIndex == CALL_BG_1_SCREEN_INDEX) ? CALL_BG_2_SCREEN_INDEX : CALL_BG_1_SCREEN_INDEX)
 
 static void CB2_KukuiCall(void)
 {
@@ -1361,11 +1362,15 @@ static void Task_AllOver(u8 taskId)
         }
         else if (gTasks[taskId].tCount == 93)
         {
-            DmaFill16(3, 0, BG_SCREEN_ADDR(gTasks[taskId].tFreeCallBgScreenIndex), 0x800);
+            MgbaPrintf(MGBA_LOG_ERROR, "%d\n", gTasks[taskId].tFreeCallBgScreenIndex);
+            assertf(gTasks[taskId].tFreeCallBgScreenIndex == ROCKRUFF_SCREEN_INDEX + 1);
+            SetBgAttribute(0, BG_ATTR_SCREENSIZE, 1);
+
             LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5a_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
-            LoadTilesMapAndPalAtOffset(0, sRockruff_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sRockruff_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sRockruff_Pals, 3, TRUE);
+            LoadTilesMapAndPalAtOffset(0, sRockruff_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sRockruff_Tilemap, 14, ROCKRUFF_SCREEN_INDEX, sRockruff_Pals, 3, TRUE);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
-            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(gTasks[taskId].tFreeCallBgScreenIndex) + (32 * 14 * 2), 6 * 32 * 2);
+            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
+            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX + 1), 20 * 32 * 2);
             gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
 
@@ -1420,7 +1425,7 @@ static void Task_LoveOurPokemon(u8 taskId)
         else if (gTasks[taskId].tCount == 32)
         {
             LoadTilesAndMapAtOffset(1, sKukui6_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui6_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, 1);
-            LoadTilemapAtOffset(0, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sRockruff_a_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, 3);
+            LoadTilemapAtOffset(0, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sRockruff_a_Tilemap, 14, ROCKRUFF_SCREEN_INDEX, 3);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
             gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
