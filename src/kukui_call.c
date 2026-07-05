@@ -1401,6 +1401,14 @@ static void Task_AllOver(u8 taskId)
         gTasks[taskId].tCount++;
     }
 
+    if (gTasks[taskId].tTimer && !IsLayerFadeActive())
+    {
+        static u16 rockruffOffset = 0;
+
+        sShouldChopRockruff = TRUE;
+        SetGpuReg(REG_OFFSET_BG0HOFS, (rockruffOffset += 4) % 512);
+    }
+
     if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
     {
         gTasks[taskId].tTimer = 0;
@@ -1422,6 +1430,8 @@ static void Task_LoveOurPokemon(u8 taskId)
         }
         else if (gTasks[taskId].tCount == 30)
         {
+            SetGpuReg(REG_OFFSET_BG0HOFS, 0);
+            sShouldChopRockruff = FALSE;
             BeginLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
         }
         else if (gTasks[taskId].tCount == 31)
