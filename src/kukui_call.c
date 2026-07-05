@@ -518,6 +518,7 @@ static EWRAM_DATA u8 sLayerFadeDelay, sLayerFadeDeltaY, sLayerFadeDelayCounter;
 static EWRAM_DATA bool8 sLayerFadeDec;
 static EWRAM_DATA bool8 sShouldUpdateLayerFade;
 static EWRAM_DATA u16 sLayerFadeBldCnt;
+static EWRAM_DATA bool8 sShouldChopRockruff;
 
 static bool8 IsLayerFadeActive()
 {
@@ -631,7 +632,13 @@ static void HBlankCB_KukuiCall(void)
     else if (sShouldUpdateLayerFade)
     {
         sShouldUpdateLayerFade = FALSE;
-        UpdateLayerFadeRegs();
+        if (sShouldChopRockruff)
+        {
+            REG_BLDCNT = BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG3 | BLDCNT_EFFECT_BLEND;
+            REG_BLDALPHA = BLDALPHA_BLEND(0, 16);
+        }
+        else
+            UpdateLayerFadeRegs();
     }
 }
 
@@ -774,6 +781,7 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     sLastVCount = -1;
     sLayerFadeActive = FALSE;
     sShouldLayerFade = FALSE; 
+    sShouldChopRockruff = FALSE;
     sShouldUpdateLayerFade = TRUE;
     sLayerFadeY = 0;
     SetHBlankCallback(HBlankCB_KukuiCall);
@@ -1362,7 +1370,6 @@ static void Task_AllOver(u8 taskId)
         }
         else if (gTasks[taskId].tCount == 93)
         {
-            MgbaPrintf(MGBA_LOG_ERROR, "%d\n", gTasks[taskId].tFreeCallBgScreenIndex);
             assertf(gTasks[taskId].tFreeCallBgScreenIndex == ROCKRUFF_SCREEN_INDEX + 1);
             SetBgAttribute(0, BG_ATTR_SCREENSIZE, 1);
 
