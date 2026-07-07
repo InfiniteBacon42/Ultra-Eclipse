@@ -1212,19 +1212,19 @@ static void LoadComputerPlayerIcons(u8 taskId)
     gSprites[sPhotoPlaceholderM1SpriteId].invisible = TRUE;
 
     sPhotoPlaceholderM2SpriteId = CreateSprite(&sPhoto_Placeholder_M2_SpriteTemplate, 74 + 12, 36 + 12, 1);
-    gSprites[sPhotoPlaceholderM2SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderM2SpriteId].oam.paletteNum = 13;
     gSprites[sPhotoPlaceholderM2SpriteId].callback = SpriteCB_Null;
     gSprites[sPhotoPlaceholderM2SpriteId].oam.priority = 1;
     gSprites[sPhotoPlaceholderM2SpriteId].invisible = TRUE;
 
     sPhotoPlaceholderF1SpriteId = CreateSprite(&sPhoto_Placeholder_F1_SpriteTemplate, 118 + 12, 36 + 12, 1);
-    gSprites[sPhotoPlaceholderF1SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderF1SpriteId].oam.paletteNum = 14;
     gSprites[sPhotoPlaceholderF1SpriteId].callback = SpriteCB_Null;
     gSprites[sPhotoPlaceholderF1SpriteId].oam.priority = 1;
     gSprites[sPhotoPlaceholderF1SpriteId].invisible = TRUE;
 
     sPhotoPlaceholderF2SpriteId = CreateSprite(&sPhoto_Placeholder_F2_SpriteTemplate, 162 + 12, 36 + 12, 1);
-    gSprites[sPhotoPlaceholderF2SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderF2SpriteId].oam.paletteNum = 15;
     gSprites[sPhotoPlaceholderF2SpriteId].callback = SpriteCB_Null;
     gSprites[sPhotoPlaceholderF2SpriteId].oam.priority = 1;
     gSprites[sPhotoPlaceholderF2SpriteId].invisible = TRUE;
