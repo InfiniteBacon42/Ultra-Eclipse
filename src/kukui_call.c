@@ -642,8 +642,8 @@ static void BeginLayerFace(u16 targets, s8 delay, u8 startY, u8 targetY)
         delay = 0;
     }
 
-    sLayerFadeDelay = delay * 2;
-    sLayerFadeDelayCounter = delay * 2;
+    sLayerFadeDelay = delay;
+    sLayerFadeDelayCounter = delay;
     sLayerFadeY = startY;
     sLayerFadeTargetY = targetY;
 
@@ -1853,11 +1853,19 @@ static void Task_AndYouAre(u8 taskId)
     if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
     {
         BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 0, 16, RGB_WHITE);
+        BeginLayerFace(BLDCNT_TGT2_ALL, 1, 16, 0);
         gSprites[sPhotoPlaceholderM1SpriteId].invisible = FALSE;
         gSprites[sPhotoPlaceholderM2SpriteId].invisible = FALSE;
         gSprites[sPhotoPlaceholderF1SpriteId].invisible = FALSE;
         gSprites[sPhotoPlaceholderF2SpriteId].invisible = FALSE;
+
+        gSprites[sPhotoPlaceholderM1SpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
+        gSprites[sPhotoPlaceholderM2SpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
+        gSprites[sPhotoPlaceholderF1SpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
+        gSprites[sPhotoPlaceholderF2SpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
+
         gSprites[sArrowCursorSpriteId].invisible = FALSE;
+        gSprites[sArrowCursorSpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
 
         StringExpandPlaceholders(gStringVar4, gText_Kukui_WhichPhoto);
         AddTextPrinterForMessageKukui(TRUE);
