@@ -155,6 +155,8 @@ static const u16 sPhoto_Placeholder_Pals[] = INCGFX_U16("graphics/kukui_call/ico
 static const u32 sArrowCursor_Gfx[]     = INCGFX_U32("graphics/interface/arrow_cursor.png", ".4bpp.smol");
 static const u16 sArrowCursor_Pal[]    = INCGFX_U16("graphics/interface/red.pal", ".gbapal");
 
+static const u16 sMainMenuTextPal[] = INCGFX_U16("graphics/interface/main_menu_text.pal", ".gbapal");
+
 #define KUKUI_1_SCREEN_INDEX 29
 #define KUKUI_2_SCREEN_INDEX 28
 #define CALL_BG_1_SCREEN_INDEX 30
@@ -905,6 +907,7 @@ void CB2_NewGameKukuiCall_FromNewMainMenu(void)
     InitWindows(sNewGameKukuiCallTextWindows);
     DmaFill32(3, 0xFFFFFFFF, BG_VRAM + (8 * 8 / 2) * TEXT_BG_TILE, 8 * 8 / 2);
     // LoadMessageBoxGfx(0, BIRCH_DLG_BASE_TILE_NUM, BG_PLTT_ID(15));
+    LoadPalette(sMainMenuTextPal, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
     PutWindowTilemap(0);
     CopyWindowToVram(0, COPYWIN_FULL);
 }
@@ -2013,6 +2016,7 @@ static void Task_StartNamingScreen(u8 taskId)
 {
     if (!gPaletteFade.active)
     {
+        SetHBlankCallback(NULL);
         FreeAllWindowBuffers();
         NewGameBirchSpeech_SetDefaultPlayerName(Random() % NUM_PRESET_NAMES);
         DestroyTask(taskId);
@@ -2125,8 +2129,9 @@ static void CB2_NewGameKukuiCall_ReturnFromNamingScreen(void)
 
     LoadTilesMapAndPalAtOffset(3, sComputer_Background_Tiles, PC_BG_BASE_TILE_NUM, 0, sComputer_Background_Tilemap, 20, 31, sComputer_Background_Pals, 0, TRUE);
     LoadTilemapAtOffset(0, PC_BG_BASE_TILE_NUM, 0, sComputer_Background_Tilemap_Top, 20, 24, 0);
-    LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sCall_Background2_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sCall_Background_Pals, 2, FALSE);
-    LoadTilesMapAndPalAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, sKukui_Pals, 1, FALSE);
+    LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles, USED_CALL_BG_BTN(gTasks[taskId].tFreeCallBgBaseTileNum), 1, sCall_Background2_Tilemap, 14, USED_CALL_BG_SI(gTasks[taskId].tFreeCallBgScreenIndex), sCall_Background_Pals, 2, FALSE);
+    LoadTilesMapAndPalAtOffset(1, sKukui5_Tiles, USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5_Tilemap, 14, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), sKukui_Pals, 1, FALSE);
+    ShowTextBoxBackground();
 
     ScanlineEffect_Stop();
     ResetSpriteData();
@@ -2159,6 +2164,7 @@ static void CB2_NewGameKukuiCall_ReturnFromNamingScreen(void)
     InitWindows(sNewGameKukuiCallTextWindows);
     DmaFill32(3, 0xFFFFFFFF, BG_VRAM + (8 * 8 / 2) * TEXT_BG_TILE, 8 * 8 / 2);
     // LoadMessageBoxGfx(0, BIRCH_DLG_BASE_TILE_NUM, BG_PLTT_ID(15));
+    LoadPalette(sMainMenuTextPal, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
     PutWindowTilemap(0);
     CopyWindowToVram(0, COPYWIN_FULL);
 }
