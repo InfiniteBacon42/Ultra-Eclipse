@@ -74,8 +74,8 @@ gText_Kukui_AndYouAre::
 @ OR just replace Call_Background2 and Kukui5 with it?
 gText_Kukui_WhichPhoto::
 	.string "So which photo should I use for your\n"
-	.string "Trainer Passport?\p" @ maybe remove the \p and just have the text visible while selecting?
-	.string " $"
+	.string "Trainer Passport?$" @ maybe remove the \p and just have the text visible while selecting?
+	@ .string " $"
 
 @ Photo Selection screen to multichoice w/ selected photo
 gText_Kukui_ChoiceOK::
@@ -86,7 +86,7 @@ gText_Kukui_ChoiceOK::
 @ After WhatsYourName prints, switches to Naming Screen
 gText_Kukui_WhatsYourName::
 	.string "All right then, I'll let you\n"
-	.string "spell out your name for me.$"
+	.string "spell out your name for me.\p $"
 
 @ Naming screen multichoice
 gText_Kukui_SoItsPlayer::

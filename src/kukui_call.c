@@ -10,6 +10,7 @@
 #include "graphics.h"
 #include "malloc.h"
 #include "math_util.h"
+#include "main_menu.h"
 #include "menu.h"
 #include "naming_screen.h"
 #include "overworld.h"
@@ -34,6 +35,7 @@ static u8 sKukuiCallMainTaskId;
 
 static void LoadMainMenuWindowFrameTiles(u8, u16);
 static void AddComputerBackgroundObjects(u8);
+static void AddComputerBackgroundObjects_ReturnFromNamingScreen(u8);
 static void Task_KukuiCall_GettingACall(u8);
 static void Task_LaunchCall(u8);
 static void Task_HeyThere(u8);
@@ -42,9 +44,12 @@ static void Task_CoolPokemon(u8);
 static void Task_AllOver(u8);
 static void Task_LoveOurPokemon(u8);
 static void Task_AndYouAre(u8);
+static void Task_WhichPhoto(u8);
+static void Task_StartNamingScreen(u8);
 static void Task_TestLoop(u8);
 
 static void SpriteCB_Null(struct Sprite *sprite);
+static void CB2_NewGameKukuiCall_ReturnFromNamingScreen(void);
 static void NewGameKukuiCall_PrintNameplate(void);
 
 extern void FastUnsafeCopy32(void *dst, const void *src, u32 size);
@@ -141,6 +146,15 @@ static const u16 sNotification_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/ico
 static const u32 sVideo_Icon_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/video_icon.png", ".4bpp.smol", "-mwidth 4 -mheight 4");
 static const u16 sVideo_Icon_Pals[] = INCGFX_U16("graphics/kukui_call/icons/video_icon.png", ".gbapal");
 
+static const u32 sPhoto_Placeholder_M1_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/photo_placeholder_m1.png", ".4bpp.smol");
+static const u32 sPhoto_Placeholder_M2_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/photo_placeholder_m2.png", ".4bpp.smol");
+static const u32 sPhoto_Placeholder_F1_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/photo_placeholder_f1.png", ".4bpp.smol");
+static const u32 sPhoto_Placeholder_F2_Gfx[] = INCGFX_U32("graphics/kukui_call/icons/photo_placeholder_f2.png", ".4bpp.smol");
+static const u16 sPhoto_Placeholder_Pals[] = INCGFX_U16("graphics/kukui_call/icons/photo_placeholder_m1.png", ".gbapal");
+
+static const u32 sArrowCursor_Gfx[]     = INCGFX_U32("graphics/interface/arrow_cursor.png", ".4bpp.smol");
+static const u16 sArrowCursor_Pal[]    = INCGFX_U16("graphics/interface/red.pal", ".gbapal");
+
 #define KUKUI_1_SCREEN_INDEX 29
 #define KUKUI_2_SCREEN_INDEX 28
 #define CALL_BG_1_SCREEN_INDEX 30
@@ -231,12 +245,19 @@ static const struct ScrollArrowsTemplate sScrollArrowsTemplate_MainMenu = {2, 0x
 #define GFX_TAG_CALL_WINDOW_EDGE    0x1005
 #define GFX_TAG_CALL_WINDOW_UI      0x1006
 #define GFX_TAG_CALL_WINDOW_SCALABLE    0x1007
+#define GFX_TAG_ARROW_CURSOR            0x1008
+#define GFX_TAG_PHOTO_PLACEHOLDER_M1    0x1009
+#define GFX_TAG_PHOTO_PLACEHOLDER_M2    0x100a
+#define GFX_TAG_PHOTO_PLACEHOLDER_F1    0x100b
+#define GFX_TAG_PHOTO_PLACEHOLDER_F2    0x100c
 
 #define PAL_TAG_ICON_SETTINGS       0x1000
 #define PAL_TAG_ICON_CAMERA         0x1001
 #define PAL_TAG_ICON_NOTIFICATION   0x1002
 #define PAL_TAG_ICON_VIDEO          0x1003
 #define PAL_TAG_CALL_WINDOW         0x1004
+#define PAL_TAG_PHOTO_PLACEHOLDER   0x1005
+#define PAL_TAG_ARROW_CURSOR        0x1009
 
 static const struct CompressedSpriteSheet sSettings_Icon_SpriteSheet =
 {
@@ -264,6 +285,41 @@ static const struct CompressedSpriteSheet sVideo_Icon_SpriteSheet =
     .data = sVideo_Icon_Gfx,
     .size = 0x400 * 8,
     .tag = GFX_TAG_ICON_VIDEO
+};
+
+static const struct CompressedSpriteSheet sPhoto_Placeholder_M1_SpriteSheet =
+{
+    .data = sPhoto_Placeholder_M1_Gfx,
+    .size = 0x1000,
+    .tag = GFX_TAG_PHOTO_PLACEHOLDER_M1
+};
+
+static const struct CompressedSpriteSheet sPhoto_Placeholder_M2_SpriteSheet =
+{
+    .data = sPhoto_Placeholder_M2_Gfx,
+    .size = 0x1000,
+    .tag = GFX_TAG_PHOTO_PLACEHOLDER_M2
+};
+
+static const struct CompressedSpriteSheet sPhoto_Placeholder_F1_SpriteSheet =
+{
+    .data = sPhoto_Placeholder_F1_Gfx,
+    .size = 0x1000,
+    .tag = GFX_TAG_PHOTO_PLACEHOLDER_F1
+};
+
+static const struct CompressedSpriteSheet sPhoto_Placeholder_F2_SpriteSheet =
+{
+    .data = sPhoto_Placeholder_F2_Gfx,
+    .size = 0x1000,
+    .tag = GFX_TAG_PHOTO_PLACEHOLDER_F2
+};
+
+static const struct CompressedSpriteSheet sArrowCursor_SpriteSheet =
+{
+    .data = sArrowCursor_Gfx,
+    .size = 0x80,
+    .tag = GFX_TAG_ARROW_CURSOR
 };
 
 static const struct CompressedSpriteSheet sCall_Window_Corner_SpriteSheet =
@@ -393,6 +449,57 @@ static const struct SpritePalette sVideo_Icon_SpritePalette =
 {
     .data = sVideo_Icon_Pals,
     .tag = PAL_TAG_ICON_VIDEO
+};
+
+static const struct SpriteTemplate sPhoto_Placeholder_M1_SpriteTemplate =
+{
+    .tileTag = GFX_TAG_PHOTO_PLACEHOLDER_M1,
+    .paletteTag = PAL_TAG_PHOTO_PLACEHOLDER,
+    .oam = &gOamData_AffineOff_ObjNormal_64x64,
+    .images = NULL,
+    .callback = SpriteCallbackDummy
+};
+
+static const struct SpriteTemplate sPhoto_Placeholder_M2_SpriteTemplate =
+{
+    .tileTag = GFX_TAG_PHOTO_PLACEHOLDER_M2,
+    .paletteTag = PAL_TAG_PHOTO_PLACEHOLDER,
+    .oam = &gOamData_AffineOff_ObjNormal_64x64,
+    .images = NULL,
+    .callback = SpriteCallbackDummy
+};
+
+static const struct SpriteTemplate sPhoto_Placeholder_F1_SpriteTemplate =
+{
+    .tileTag = GFX_TAG_PHOTO_PLACEHOLDER_F1,
+    .paletteTag = PAL_TAG_PHOTO_PLACEHOLDER,
+    .oam = &gOamData_AffineOff_ObjNormal_64x64,
+    .images = NULL,
+    .callback = SpriteCallbackDummy
+};
+
+static const struct SpriteTemplate sPhoto_Placeholder_F2_SpriteTemplate =
+{
+    .tileTag = GFX_TAG_PHOTO_PLACEHOLDER_F2,
+    .paletteTag = PAL_TAG_PHOTO_PLACEHOLDER,
+    .oam = &gOamData_AffineOff_ObjNormal_64x64,
+    .images = NULL,
+    .callback = SpriteCallbackDummy
+};
+
+static const struct SpriteTemplate sArrowCursor_SpriteTemplate =
+{
+    .tileTag = GFX_TAG_ARROW_CURSOR,
+    .paletteTag = PAL_TAG_ARROW_CURSOR,
+    .oam = &gOamData_AffineOff_ObjNormal_16x16,
+    .images = NULL,
+    .callback = SpriteCallbackDummy
+};
+
+static const struct SpritePalette sArrowCursor_SpritePalette =
+{
+    .data = sArrowCursor_Pal,
+    .tag = PAL_TAG_ARROW_CURSOR
 };
 
 static const struct SpriteTemplate sCall_Window_Corner_SpriteTemplate =
@@ -649,6 +756,13 @@ static void LoadMainMenuWindowFrameTiles(u8 bgId, u16 tileOffset)
 }
 
 EWRAM_DATA static u8 sCallWindowCornerNWSpriteId, sCallWindowEdgeNSpriteId, sCallWindowCornerNESpriteId, sCallWindowCornerSESpriteId, sCallWindowEdgeSSpriteId, sCallWindowCornerSWSpriteId;
+EWRAM_DATA static u8 sArrowCursorSpriteId, sPhotoPlaceholderM1SpriteId, sPhotoPlaceholderM2SpriteId, sPhotoPlaceholderF1SpriteId, sPhotoPlaceholderF2SpriteId, sPhotoPlaceholderASpriteId, sPhotoPlaceholderBSpriteId, sPhotoPlaceholderCSpriteId, sPhotoPlaceholderDSpriteId;
+EWRAM_DATA static s8 sTopSelect, sBottomSelect;
+
+#define CURSOR_LEFT_X 12
+#define CURSOR_DELTA_X 44
+#define CURSOR_TOP_Y 38
+#define CURSOR_BOTTOM_Y 81
 
 #define tTimer                      data[0]
 #define tCount                      data[1]
@@ -814,6 +928,12 @@ static void AddComputerBackgroundObjects(u8 taskId)
     LoadCompressedSpriteSheet(&sNotification_Icon_SpriteSheet);
     u32 temp = LoadCompressedSpriteSheetByTemplate(&sVideo_Icon_SpriteTemplate, 0);
     
+    LoadCompressedSpriteSheet(&sPhoto_Placeholder_M1_SpriteSheet);
+    LoadCompressedSpriteSheet(&sPhoto_Placeholder_M2_SpriteSheet);
+    LoadCompressedSpriteSheet(&sPhoto_Placeholder_F1_SpriteSheet);
+    LoadCompressedSpriteSheet(&sPhoto_Placeholder_F2_SpriteSheet);
+    LoadCompressedSpriteSheet(&sArrowCursor_SpriteSheet);
+
     LoadCompressedSpriteSheet(&sCall_Window_Corner_SpriteSheet);
     LoadCompressedSpriteSheet(&sCall_Window_Edge_SpriteSheet);
     LoadCompressedSpriteSheet(&sCall_Window_UI_SpriteSheet);
@@ -847,8 +967,65 @@ static void AddComputerBackgroundObjects(u8 taskId)
     gSprites[videoIconSpriteId].invisible = FALSE;
     gTasks[taskId].tVideoIconSpriteId = videoIconSpriteId;
 
+    LoadSpritePalette(&sArrowCursor_SpritePalette);
+
+    sArrowCursorSpriteId = CreateSprite(&sArrowCursor_SpriteTemplate, CURSOR_LEFT_X, CURSOR_TOP_Y, 1);
+    gSprites[sArrowCursorSpriteId].callback = SpriteCB_Null;
+    gSprites[sArrowCursorSpriteId].oam.priority = 1;
+    gSprites[sArrowCursorSpriteId].invisible = TRUE;
+
+    LoadPalette(sPhoto_Placeholder_Pals, OBJ_PLTT_ID(12), sizeof(sPhoto_Placeholder_Pals));
+
+    sPhotoPlaceholderM1SpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 30 + 12, 36 + 12, 1);
+    gSprites[sPhotoPlaceholderM1SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderM1SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderM1SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderM1SpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderM2SpriteId = CreateSprite(&sPhoto_Placeholder_M2_SpriteTemplate, 74 + 12, 36 + 12, 1);
+    gSprites[sPhotoPlaceholderM2SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderM2SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderM2SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderM2SpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderF1SpriteId = CreateSprite(&sPhoto_Placeholder_F1_SpriteTemplate, 118 + 12, 36 + 12, 1);
+    gSprites[sPhotoPlaceholderF1SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderF1SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderF1SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderF1SpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderF2SpriteId = CreateSprite(&sPhoto_Placeholder_F2_SpriteTemplate, 162 + 12, 36 + 12, 1);
+    gSprites[sPhotoPlaceholderF2SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderF2SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderF2SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderF2SpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderASpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 30 + 12, 80 + 12, 1);
+    gSprites[sPhotoPlaceholderASpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderASpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderASpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderASpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderBSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 74 + 12, 80 + 12, 1);
+    gSprites[sPhotoPlaceholderBSpriteId].oam.paletteNum = 13;
+    gSprites[sPhotoPlaceholderBSpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderBSpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderBSpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderCSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 118 + 12, 80 + 12, 1);
+    gSprites[sPhotoPlaceholderCSpriteId].oam.paletteNum = 14;
+    gSprites[sPhotoPlaceholderCSpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderCSpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderCSpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderDSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 162 + 12, 80 + 12, 1);
+    gSprites[sPhotoPlaceholderDSpriteId].oam.paletteNum = 15;
+    gSprites[sPhotoPlaceholderDSpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderDSpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderDSpriteId].invisible = TRUE;
+
     LoadSpritePalette(&sCall_Window_SpritePalette);
-    
+
     sCallWindowCornerNWSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 32, 32, 1);
     gSprites[sCallWindowCornerNWSpriteId].callback = SpriteCB_Null;
     gSprites[sCallWindowCornerNWSpriteId].oam.priority = 1;
@@ -920,6 +1097,139 @@ static void AddComputerBackgroundObjects(u8 taskId)
         MgbaPrintf(MGBA_LOG_ERROR, "Sprite Ids: %d, %d, %d, %d, %d", notificationIconSpriteId, videoIconSpriteId, cameraIconSpriteId, settingsIconSpriteId, callWindowUISpriteId);
         MgbaPrintf(MGBA_LOG_ERROR, "TEMP: %d", temp);
     #endif
+}
+
+static void AddComputerBackgroundObjects_ReturnFromNamingScreen(u8 taskId)
+{
+    u8 settingsIconSpriteId;
+    u8 cameraIconSpriteId;
+    u8 notificationIconSpriteId;
+    u8 videoIconSpriteId;
+    u8 callWindowUISpriteId;
+
+    LoadCompressedSpriteSheet(&sSettings_Icon_SpriteSheet);
+    LoadCompressedSpriteSheet(&sCamera_Icon_SpriteSheet);
+    LoadCompressedSpriteSheet(&sNotification_Icon_SpriteSheet);
+    LoadCompressedSpriteSheetByTemplate(&sVideo_Icon_SpriteTemplate, 0);
+    
+    if (gSaveBlock2Ptr->playerGender == MALE)
+        LoadCompressedSpriteSheet(&sPhoto_Placeholder_M1_SpriteSheet);
+    else if (gSaveBlock2Ptr->playerGender == FEMALE)
+        LoadCompressedSpriteSheet(&sPhoto_Placeholder_F1_SpriteSheet);
+
+    LoadCompressedSpriteSheet(&sCall_Window_Corner_SpriteSheet);
+    LoadCompressedSpriteSheet(&sCall_Window_Edge_SpriteSheet);
+    LoadCompressedSpriteSheet(&sCall_Window_UI_SpriteSheet);
+    LoadCompressedSpriteSheet(&sCall_Window_Scalable_SpriteSheet);
+
+    LoadSpritePalette(&sSettings_Icon_SpritePalette);
+    settingsIconSpriteId = CreateSprite(&sSettings_Icon_SpriteTemplate, 197 + 16, 41 + 16, 1);
+    gSprites[settingsIconSpriteId].callback = SpriteCB_Null;
+    gSprites[settingsIconSpriteId].oam.priority = 1;
+    gSprites[settingsIconSpriteId].invisible = FALSE;
+    gTasks[taskId].tSettingsIconSpriteId = settingsIconSpriteId;
+    
+    LoadSpritePalette(&sCamera_Icon_SpritePalette);
+    cameraIconSpriteId = CreateSprite(&sCamera_Icon_SpriteTemplate, 197 + 16, 20 + 16, 1);
+    gSprites[cameraIconSpriteId].callback = SpriteCB_Null;
+    gSprites[cameraIconSpriteId].oam.priority = 1;
+    gSprites[cameraIconSpriteId].invisible = FALSE;
+    gTasks[taskId].tCameraIconSpriteId = cameraIconSpriteId;
+
+    LoadSpritePalette(&sNotification_Icon_SpritePalette);
+    notificationIconSpriteId = CreateSprite(&sNotification_Icon_SpriteTemplate, 214 + 8, 1 + 8, 1);
+    gSprites[notificationIconSpriteId].callback = SpriteCB_Null;
+    gSprites[notificationIconSpriteId].oam.priority = 0;
+    gSprites[notificationIconSpriteId].invisible = FALSE;
+    gTasks[taskId].tNotificationIconSpriteId = notificationIconSpriteId;
+
+    LoadSpritePalette(&sVideo_Icon_SpritePalette);
+    videoIconSpriteId = CreateSprite(&sVideo_Icon_SpriteTemplate, 197 + 16, -1 + 16, 1);
+    gSprites[videoIconSpriteId].callback = SpriteCB_Null;
+    gSprites[videoIconSpriteId].oam.priority = 1;
+    gSprites[videoIconSpriteId].invisible = FALSE;
+    gTasks[taskId].tVideoIconSpriteId = videoIconSpriteId;
+
+    LoadPalette(sPhoto_Placeholder_Pals, OBJ_PLTT_ID(12), sizeof(sPhoto_Placeholder_Pals));
+
+    if (gSaveBlock2Ptr->playerGender == MALE)
+        sPhotoPlaceholderM1SpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 225, 103, 1);
+    else if (gSaveBlock2Ptr->playerGender == FEMALE)
+        sPhotoPlaceholderM1SpriteId = CreateSprite(&sPhoto_Placeholder_F1_SpriteTemplate, 225, 103, 1);
+    
+    gSprites[sPhotoPlaceholderM1SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderM1SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderM1SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderM1SpriteId].invisible = FALSE;
+
+    LoadSpritePalette(&sCall_Window_SpritePalette);
+
+    sCallWindowCornerNWSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 32, 32, 1);
+    gSprites[sCallWindowCornerNWSpriteId].callback = SpriteCB_Null;
+    gSprites[sCallWindowCornerNWSpriteId].oam.priority = 1;
+    gSprites[sCallWindowCornerNWSpriteId].invisible = FALSE;
+
+    sCallWindowCornerNESpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 160, 32, 1);
+    gSprites[sCallWindowCornerNESpriteId].callback = SpriteCB_Null;
+    gSprites[sCallWindowCornerNESpriteId].oam.priority = 1;
+    SetSpriteOamFlipBits(&gSprites[sCallWindowCornerNESpriteId], TRUE, FALSE);
+    gSprites[sCallWindowCornerNESpriteId].invisible = FALSE;
+
+    sCallWindowCornerSESpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 160, 88, 1);
+    gSprites[sCallWindowCornerSESpriteId].callback = SpriteCB_Null;
+    gSprites[sCallWindowCornerSESpriteId].oam.priority = 1;
+    SetSpriteOamFlipBits(&gSprites[sCallWindowCornerSESpriteId], TRUE, TRUE);
+    gSprites[sCallWindowCornerSESpriteId].invisible = FALSE;
+
+    sCallWindowCornerSWSpriteId = CreateSprite(&sCall_Window_Corner_SpriteTemplate, 32, 88, 1);
+    gSprites[sCallWindowCornerSWSpriteId].callback = SpriteCB_Null;
+    gSprites[sCallWindowCornerSWSpriteId].oam.priority = 1;
+    SetSpriteOamFlipBits(&gSprites[sCallWindowCornerSWSpriteId], FALSE, TRUE);
+    gSprites[sCallWindowCornerSWSpriteId].invisible = FALSE;
+    
+    sCallWindowEdgeNSpriteId = CreateSprite(&sCall_Window_Edge_SpriteTemplate, 96, 16, 1);
+    gSprites[sCallWindowEdgeNSpriteId].callback = SpriteCB_Null;
+    gSprites[sCallWindowEdgeNSpriteId].oam.priority = 1;
+    gSprites[sCallWindowEdgeNSpriteId].invisible = FALSE;
+
+    sCallWindowEdgeSSpriteId = CreateSprite(&sCall_Window_Edge_SpriteTemplate, 96, 104, 1);
+    gSprites[sCallWindowEdgeSSpriteId].callback = SpriteCB_Null;
+    gSprites[sCallWindowEdgeSSpriteId].oam.priority = 1;
+    SetSpriteOamFlipBits(&gSprites[sCallWindowEdgeSSpriteId], FALSE, TRUE);
+    gSprites[sCallWindowEdgeSSpriteId].invisible = FALSE;
+    
+    callWindowUISpriteId = CreateSprite(&sCall_Window_UI_SpriteTemplate, 152, 16, 1);
+    gSprites[callWindowUISpriteId].callback = SpriteCB_Null;
+    gSprites[callWindowUISpriteId].oam.priority = 0;
+    gSprites[callWindowUISpriteId].invisible = FALSE;
+    gTasks[taskId].tCallWindowUISpriteId = callWindowUISpriteId;
+
+    u32 matrixNum = AllocOamMatrix();
+    gTasks[taskId].tCallWindowScalable0SpriteId = CreateSpriteAtEnd(&sCall_Window_Scalable_SpriteTemplate, 213, 15, 1);
+    gSprites[gTasks[taskId].tCallWindowScalable0SpriteId].callback = SpriteCB_Null;
+    gSprites[gTasks[taskId].tCallWindowScalable0SpriteId].oam.priority = 0;
+    gSprites[gTasks[taskId].tCallWindowScalable0SpriteId].oam.matrixNum = matrixNum;
+    gSprites[gTasks[taskId].tCallWindowScalable0SpriteId].invisible = TRUE;
+
+    gTasks[taskId].tCallWindowScalable1SpriteId = CreateSpriteAtEnd(&sCall_Window_Scalable_SpriteTemplate, 213, 15, 1);
+    gSprites[gTasks[taskId].tCallWindowScalable1SpriteId].callback = SpriteCB_Null;
+    gSprites[gTasks[taskId].tCallWindowScalable1SpriteId].oam.priority = 0;
+    gSprites[gTasks[taskId].tCallWindowScalable1SpriteId].oam.matrixNum = matrixNum;
+    gSprites[gTasks[taskId].tCallWindowScalable1SpriteId].invisible = TRUE;
+
+    gTasks[taskId].tCallWindowScalable2SpriteId = CreateSpriteAtEnd(&sCall_Window_Scalable_SpriteTemplate, 213, 15, 1);
+    gSprites[gTasks[taskId].tCallWindowScalable2SpriteId].callback = SpriteCB_Null;
+    gSprites[gTasks[taskId].tCallWindowScalable2SpriteId].oam.priority = 0;
+    gSprites[gTasks[taskId].tCallWindowScalable2SpriteId].oam.matrixNum = matrixNum;
+    gSprites[gTasks[taskId].tCallWindowScalable2SpriteId].invisible = TRUE;
+
+    gTasks[taskId].tCallWindowScalable3SpriteId = CreateSpriteAtEnd(&sCall_Window_Scalable_SpriteTemplate, 213, 15, 1);
+    gSprites[gTasks[taskId].tCallWindowScalable3SpriteId].callback = SpriteCB_Null;
+    gSprites[gTasks[taskId].tCallWindowScalable3SpriteId].oam.priority = 0;
+    gSprites[gTasks[taskId].tCallWindowScalable3SpriteId].oam.matrixNum = matrixNum;
+    gSprites[gTasks[taskId].tCallWindowScalable3SpriteId].invisible = TRUE;
+
+    SetOamMatrixRotationScaling(matrixNum, 10, 10, 0);
 }
 
 static void Task_KukuiCall_GettingACall(u8 taskId)
@@ -1466,7 +1776,7 @@ static void Task_LoveOurPokemon(u8 taskId)
 
     if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
     {
-         gTasks[taskId].tTimer = 0;
+        gTasks[taskId].tTimer = 0;
         gTasks[taskId].tCount = 0;
         gTasks[taskId].func = Task_AndYouAre;
     }
@@ -1519,9 +1829,157 @@ static void Task_AndYouAre(u8 taskId)
 
     if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
     {
+        BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 0, 16, RGB_WHITE);
+        gSprites[sPhotoPlaceholderM1SpriteId].invisible = FALSE;
+        gSprites[sPhotoPlaceholderM2SpriteId].invisible = FALSE;
+        gSprites[sPhotoPlaceholderF1SpriteId].invisible = FALSE;
+        gSprites[sPhotoPlaceholderF2SpriteId].invisible = FALSE;
+        gSprites[sArrowCursorSpriteId].invisible = FALSE;
+
+        StringExpandPlaceholders(gStringVar4, gText_Kukui_WhichPhoto);
+        AddTextPrinterForMessageKukui(TRUE);
+
+        sTopSelect = 0;
+        sBottomSelect = -1;
+
         gTasks[taskId].tTimer = 0;
         gTasks[taskId].tCount = 0;
-        gTasks[taskId].func = Task_TestLoop;
+        gTasks[taskId].func = Task_WhichPhoto;
+    }
+}
+
+static void Task_WhichPhoto(u8 taskId)
+{
+    UpdatePaletteFade();
+
+    if (IsTextPrinterActiveOnWindow(0))
+    {
+
+    }
+    else if (sBottomSelect < 0)
+    {
+        if (JOY_NEW(A_BUTTON | DPAD_DOWN))
+        {
+            gSprites[sPhotoPlaceholderASpriteId].invisible = FALSE;
+            gSprites[sPhotoPlaceholderBSpriteId].invisible = FALSE;
+            gSprites[sPhotoPlaceholderCSpriteId].invisible = FALSE;
+            gSprites[sPhotoPlaceholderDSpriteId].invisible = FALSE;
+            
+            if (JOY_NEW(A_BUTTON))
+                sBottomSelect = 0;
+            else
+                sBottomSelect = sTopSelect;
+        }
+        else if (JOY_NEW(DPAD_LEFT))
+        {
+            sTopSelect = (sTopSelect == 0) ? 3 : sTopSelect - 1;
+        }
+        else if (JOY_NEW(DPAD_RIGHT))
+        {
+            sTopSelect = (sTopSelect == 3) ? 0 : sTopSelect + 1;
+        }
+    }
+    else
+    {
+        if (JOY_NEW(B_BUTTON | DPAD_UP))
+        {
+            gSprites[sPhotoPlaceholderASpriteId].invisible = TRUE;
+            gSprites[sPhotoPlaceholderBSpriteId].invisible = TRUE;
+            gSprites[sPhotoPlaceholderCSpriteId].invisible = TRUE;
+            gSprites[sPhotoPlaceholderDSpriteId].invisible = TRUE;
+            
+            if (JOY_NEW(DPAD_UP))
+                sTopSelect = sBottomSelect;
+            sBottomSelect = -1;
+        }
+        else if (JOY_NEW(A_BUTTON))
+        {
+            FillWindowPixelBuffer(0, PIXEL_FILL(0));
+            CopyWindowToVram(0, COPYWIN_GFX);
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_ChoiceOK);
+            AddTextPrinterForMessageKukui(TRUE);
+            gTasks[taskId].tTimer = 1;
+        }
+        else if (JOY_NEW(DPAD_LEFT))
+        {
+            sBottomSelect = (sBottomSelect == 0) ? 3 : sBottomSelect - 1;
+        }
+        else if (JOY_NEW(DPAD_RIGHT))
+        {
+            sBottomSelect = (sBottomSelect == 3) ? 0 : sBottomSelect + 1;
+        }
+    }
+
+    if (JOY_NEW(DPAD_ANY | A_BUTTON | B_BUTTON))
+    {
+        PlaySE(SE_SELECT);
+        s16 x = gSprites[sArrowCursorSpriteId].x;
+        s16 y = gSprites[sArrowCursorSpriteId].y;
+
+        if (sBottomSelect < 0)
+        {
+            gSprites[sArrowCursorSpriteId].x = CURSOR_LEFT_X + (sTopSelect * CURSOR_DELTA_X);
+            gSprites[sArrowCursorSpriteId].y = CURSOR_TOP_Y;
+        }
+        else
+        {
+            gSprites[sArrowCursorSpriteId].x = CURSOR_LEFT_X + (sBottomSelect * CURSOR_DELTA_X);
+            gSprites[sArrowCursorSpriteId].y = CURSOR_BOTTOM_Y;
+
+            u8 spriteId = 0;
+            if (sTopSelect == 0)
+                spriteId = sPhotoPlaceholderM1SpriteId;
+            else if (sTopSelect == 1)
+                spriteId = sPhotoPlaceholderM2SpriteId;
+            else if (sTopSelect == 2)
+                spriteId = sPhotoPlaceholderF1SpriteId;
+            else if (sTopSelect == 3)
+                spriteId = sPhotoPlaceholderF2SpriteId;
+            
+            gSprites[sPhotoPlaceholderASpriteId].oam.tileNum = gSprites[spriteId].oam.tileNum;
+            gSprites[sPhotoPlaceholderBSpriteId].oam.tileNum = gSprites[spriteId].oam.tileNum;
+            gSprites[sPhotoPlaceholderCSpriteId].oam.tileNum = gSprites[spriteId].oam.tileNum;
+            gSprites[sPhotoPlaceholderDSpriteId].oam.tileNum = gSprites[spriteId].oam.tileNum;
+        }
+    }
+
+    if (!RunTextPrintersAndIsPrinter0Active())
+    {
+        if (gTasks[taskId].tTimer == 1)
+        {
+            StringExpandPlaceholders(gStringVar4, gText_Kukui_WhatsYourName);
+            AddTextPrinterForMessageKukui(TRUE);
+            gTasks[taskId].tTimer++;
+        }
+        else if (gTasks[taskId].tTimer > 1)
+        {
+            // gSprites[sArrowCursorSpriteId].invisible = TRUE;
+            // gSprites[sPhotoPlaceholderM1SpriteId].invisible = TRUE;
+            // gSprites[sPhotoPlaceholderM2SpriteId].invisible = TRUE;
+            // gSprites[sPhotoPlaceholderF1SpriteId].invisible = TRUE;
+            // gSprites[sPhotoPlaceholderF2SpriteId].invisible = TRUE;
+            // gSprites[sPhotoPlaceholderASpriteId].invisible = TRUE;
+            // gSprites[sPhotoPlaceholderBSpriteId].invisible = TRUE;
+            // gSprites[sPhotoPlaceholderCSpriteId].invisible = TRUE;
+            // gSprites[sPhotoPlaceholderDSpriteId].invisible = TRUE;
+            // BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 16, 0, RGB_WHITE);
+
+            gSaveBlock2Ptr->playerGender = (sTopSelect == 0 || sTopSelect == 1) ? MALE : FEMALE;
+            gTasks[taskId].tTimer = 0;
+            gTasks[taskId].tCount = 0;
+            gTasks[taskId].func = Task_StartNamingScreen;
+        }
+    }
+}
+
+static void Task_StartNamingScreen(u8 taskId)
+{
+    if (!gPaletteFade.active)
+    {
+        FreeAllWindowBuffers();
+        NewGameBirchSpeech_SetDefaultPlayerName(Random() % NUM_PRESET_NAMES);
+        DestroyTask(taskId);
+        DoNamingScreen(NAMING_SCREEN_PLAYER, gSaveBlock2Ptr->playerName, gSaveBlock2Ptr->playerGender, 0, 0, CB2_NewGameKukuiCall_ReturnFromNamingScreen);
     }
 }
 
@@ -1588,6 +2046,99 @@ static void Task_TestLoop(u8 taskId)
         AddTextPrinterForMessageKukui(TRUE);
     }
 }
+
+static void CB2_NewGameKukuiCall_ReturnFromNamingScreen(void)
+{
+    u8 taskId;
+    u8 spriteId;
+    u16 savedIme;
+
+    ResetBgsAndClearDma3BusyFlags(0);
+    SetGpuReg(REG_OFFSET_DISPCNT, 0);
+    SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_OBJ_ON | DISPCNT_OBJ_1D_MAP);
+    InitBgsFromTemplates(0, sBgTemplates, ARRAY_COUNT(sBgTemplates));
+    SetVBlankCallback(NULL);
+    SetGpuReg(REG_OFFSET_BG3CNT, 0);
+    SetGpuReg(REG_OFFSET_BG2CNT, 0);
+    SetGpuReg(REG_OFFSET_BG1CNT, 0);
+    SetGpuReg(REG_OFFSET_BG0CNT, 0);
+    SetGpuReg(REG_OFFSET_BG3HOFS, 0);
+    SetGpuReg(REG_OFFSET_BG3VOFS, 0);
+    SetGpuReg(REG_OFFSET_BG2HOFS, 0);
+    SetGpuReg(REG_OFFSET_BG2VOFS, 0);
+    SetGpuReg(REG_OFFSET_BG1HOFS, 0);
+    SetGpuReg(REG_OFFSET_BG1VOFS, 0);
+    SetGpuReg(REG_OFFSET_BG0HOFS, 0);
+    SetGpuReg(REG_OFFSET_BG0VOFS, 0);
+    DmaFill16(3, 0, VRAM, VRAM_SIZE);
+    DmaFill32(3, 0, OAM, OAM_SIZE);
+    DmaFill16(3, 0, PLTT, PLTT_SIZE);
+    DmaFill16(3, BLANK_TILE_2 - 0x200, BG_SCREEN_ADDR(CALL_BG_1_SCREEN_INDEX), 0x800);
+    DmaFill16(3, BLANK_TILE_2 - 0x200, BG_SCREEN_ADDR(CALL_BG_2_SCREEN_INDEX), 0x800);
+    ResetPaletteFade();
+
+    ResetTasks();
+    taskId = CreateTask(Task_TestLoop, 0);
+    gTasks[taskId].tFreeKukuiBaseTileNum = KUKUI_2_BASE_TILE_NUM;
+    gTasks[taskId].tFreeCallBgBaseTileNum = CALL_BG_2_BASE_TILE_NUM;
+    gTasks[taskId].tFreeKukuiScreenIndex = KUKUI_2_SCREEN_INDEX;
+    gTasks[taskId].tFreeCallBgScreenIndex = CALL_BG_2_SCREEN_INDEX;
+    gTasks[taskId].tTimer = 0;
+    gTasks[taskId].tCount = 0;
+
+    LoadTilesMapAndPalAtOffset(3, sComputer_Background_Tiles, PC_BG_BASE_TILE_NUM, 0, sComputer_Background_Tilemap, 20, 31, sComputer_Background_Pals, 0, TRUE);
+    LoadTilemapAtOffset(0, PC_BG_BASE_TILE_NUM, 0, sComputer_Background_Tilemap_Top, 20, 24, 0);
+    LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sCall_Background2_Tilemap, 14, gTasks[taskId].tFreeCallBgScreenIndex, sCall_Background_Pals, 2, FALSE);
+    LoadTilesMapAndPalAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, 14, gTasks[taskId].tFreeKukuiScreenIndex, sKukui_Pals, 1, FALSE);
+
+    ScanlineEffect_Stop();
+    ResetSpriteData();
+    FreeAllSpritePalettes();
+    // ResetAllPicSprites();
+    AddComputerBackgroundObjects_ReturnFromNamingScreen(taskId);
+    // PlayBGM(MUS_ROUTE122);
+    BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
+    SetGpuReg(REG_OFFSET_WIN0H, 0);
+    SetGpuReg(REG_OFFSET_WIN0V, 0);
+    SetGpuReg(REG_OFFSET_WININ, 0);
+    SetGpuReg(REG_OFFSET_WINOUT, 0);
+    SetGpuReg(REG_OFFSET_BLDCNT, BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG2 | BLDCNT_TGT2_BG3 | BLDCNT_EFFECT_BLEND);
+    SetGpuReg(REG_OFFSET_BLDALPHA, BLDALPHA_BLEND(16, 0));
+    SetGpuReg(REG_OFFSET_BLDY, 0);
+
+    ShowBg(1);
+    ShowBg(2);
+    ShowBg(3);
+    sLastVCount = -1;
+    sLayerFadeActive = FALSE;
+    sShouldLayerFade = FALSE; 
+    sShouldChopRockruff = FALSE;
+    sShouldUpdateLayerFade = TRUE;
+    sLayerFadeY = 0;
+    SetHBlankCallback(HBlankCB_KukuiCall);
+    SetVBlankCallback(VBlankCB_KukuiCall);
+    EnableInterrupts(INTR_FLAG_VBLANK | INTR_FLAG_HBLANK);
+    SetMainCallback2(CB2_KukuiCall);
+    InitWindows(sNewGameKukuiCallTextWindows);
+    DmaFill32(3, 0xFFFFFFFF, BG_VRAM + (8 * 8 / 2) * TEXT_BG_TILE, 8 * 8 / 2);
+    // LoadMessageBoxGfx(0, BIRCH_DLG_BASE_TILE_NUM, BG_PLTT_ID(15));
+    PutWindowTilemap(0);
+    CopyWindowToVram(0, COPYWIN_FULL);
+}
+
+// void NewGameKukuiCall_SetDefaultPlayerName(u8 nameId)
+// {
+//     const u8 *name;
+//     u8 i;
+
+//     if (gSaveBlock2Ptr->playerGender == MALE)
+//         name = sMalePresetNames[nameId];
+//     else
+//         name = sFemalePresetNames[nameId];
+//     for (i = 0; i < PLAYER_NAME_LENGTH; i++)
+//         gSaveBlock2Ptr->playerName[i] = name[i];
+//     gSaveBlock2Ptr->playerName[PLAYER_NAME_LENGTH] = EOS;
+// }
 
 // static void Task_NewGameBirchSpeech_ThisIsAPokemon(u8 taskId)
 // {
@@ -2036,7 +2587,7 @@ static void Task_TestLoop(u8 taskId)
 //     }
 // }
 
-// static void CB2_NewGameBirchSpeech_ReturnFromNamingScreen(void)
+// static void CB2_NewGameKukuiCall_ReturnFromNamingScreen(void)
 // {
 //     u8 taskId;
 //     u8 spriteId;
@@ -2331,20 +2882,6 @@ static void SpriteCB_Null(struct Sprite *sprite)
 // static s8 NewGameBirchSpeech_ProcessGenderMenuInput(void)
 // {
 //     return Menu_ProcessInputNoWrap();
-// }
-
-// void NewGameBirchSpeech_SetDefaultPlayerName(u8 nameId)
-// {
-//     const u8 *name;
-//     u8 i;
-
-//     if (gSaveBlock2Ptr->playerGender == MALE)
-//         name = sMalePresetNames[nameId];
-//     else
-//         name = sFemalePresetNames[nameId];
-//     for (i = 0; i < PLAYER_NAME_LENGTH; i++)
-//         gSaveBlock2Ptr->playerName[i] = name[i];
-//     gSaveBlock2Ptr->playerName[PLAYER_NAME_LENGTH] = EOS;
 // }
 
 // static void NewGameBirchSpeech_ClearGenderWindowTilemap(u8 bg, u8 x, u8 y, u8 width, u8 height, u8 unused)
