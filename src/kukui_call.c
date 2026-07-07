@@ -262,56 +262,56 @@ static const struct ScrollArrowsTemplate sScrollArrowsTemplate_MainMenu = {2, 0x
 static const struct CompressedSpriteSheet sSettings_Icon_SpriteSheet =
 {
     .data = sSettings_Icon_Gfx,
-    .size = 0x400,
+    .size = 0x200,
     .tag = GFX_TAG_ICON_SETTINGS
 };
 
 static const struct CompressedSpriteSheet sCamera_Icon_SpriteSheet =
 {
     .data = sCamera_Icon_Gfx,
-    .size = 0x400,
+    .size = 0x200,
     .tag = GFX_TAG_ICON_CAMERA
 };
 
 static const struct CompressedSpriteSheet sNotification_Icon_SpriteSheet =
 {
     .data = sNotification_Icon_Gfx,
-    .size = 0x100,
+    .size = 0x80,
     .tag = GFX_TAG_ICON_NOTIFICATION
 };
 
 static const struct CompressedSpriteSheet sVideo_Icon_SpriteSheet =
 {
     .data = sVideo_Icon_Gfx,
-    .size = 0x400 * 8,
+    .size = 0x200 * 8,
     .tag = GFX_TAG_ICON_VIDEO
 };
 
 static const struct CompressedSpriteSheet sPhoto_Placeholder_M1_SpriteSheet =
 {
     .data = sPhoto_Placeholder_M1_Gfx,
-    .size = 0x1000,
+    .size = 0x800,
     .tag = GFX_TAG_PHOTO_PLACEHOLDER_M1
 };
 
 static const struct CompressedSpriteSheet sPhoto_Placeholder_M2_SpriteSheet =
 {
     .data = sPhoto_Placeholder_M2_Gfx,
-    .size = 0x1000,
+    .size = 0x800,
     .tag = GFX_TAG_PHOTO_PLACEHOLDER_M2
 };
 
 static const struct CompressedSpriteSheet sPhoto_Placeholder_F1_SpriteSheet =
 {
     .data = sPhoto_Placeholder_F1_Gfx,
-    .size = 0x1000,
+    .size = 0x800,
     .tag = GFX_TAG_PHOTO_PLACEHOLDER_F1
 };
 
 static const struct CompressedSpriteSheet sPhoto_Placeholder_F2_SpriteSheet =
 {
     .data = sPhoto_Placeholder_F2_Gfx,
-    .size = 0x1000,
+    .size = 0x800,
     .tag = GFX_TAG_PHOTO_PLACEHOLDER_F2
 };
 
@@ -325,28 +325,28 @@ static const struct CompressedSpriteSheet sArrowCursor_SpriteSheet =
 static const struct CompressedSpriteSheet sCall_Window_Corner_SpriteSheet =
 {
     .data = sCall_Window_Corner_Gfx,
-    .size = 0x1000,
+    .size = 0x800,
     .tag = GFX_TAG_CALL_WINDOW_CORNER
 };
 
 static const struct CompressedSpriteSheet sCall_Window_Edge_SpriteSheet =
 {
     .data = sCall_Window_Edge_Gfx,
-    .size = 0x1000,
+    .size = 0x800,
     .tag = GFX_TAG_CALL_WINDOW_EDGE
 };
 
 static const struct CompressedSpriteSheet sCall_Window_UI_SpriteSheet =
 {
     .data = sCall_Window_UI_Gfx,
-    .size = 0x800,
+    .size = 0x400,
     .tag = GFX_TAG_CALL_WINDOW_UI
 };
 
 static const struct CompressedSpriteSheet sCall_Window_Scalable_SpriteSheet =
 {
     .data = sCall_Window_Scalable_Gfx,
-    .size = 0x800,
+    .size = 0x400,
     .tag = GFX_TAG_CALL_WINDOW_SCALABLE
 };
 
@@ -927,12 +927,6 @@ static void AddComputerBackgroundObjects(u8 taskId)
     LoadCompressedSpriteSheet(&sCamera_Icon_SpriteSheet);
     LoadCompressedSpriteSheet(&sNotification_Icon_SpriteSheet);
     u32 temp = LoadCompressedSpriteSheetByTemplate(&sVideo_Icon_SpriteTemplate, 0);
-    
-    LoadCompressedSpriteSheet(&sPhoto_Placeholder_M1_SpriteSheet);
-    LoadCompressedSpriteSheet(&sPhoto_Placeholder_M2_SpriteSheet);
-    LoadCompressedSpriteSheet(&sPhoto_Placeholder_F1_SpriteSheet);
-    LoadCompressedSpriteSheet(&sPhoto_Placeholder_F2_SpriteSheet);
-    LoadCompressedSpriteSheet(&sArrowCursor_SpriteSheet);
 
     LoadCompressedSpriteSheet(&sCall_Window_Corner_SpriteSheet);
     LoadCompressedSpriteSheet(&sCall_Window_Edge_SpriteSheet);
@@ -966,63 +960,6 @@ static void AddComputerBackgroundObjects(u8 taskId)
     gSprites[videoIconSpriteId].oam.priority = 1;
     gSprites[videoIconSpriteId].invisible = FALSE;
     gTasks[taskId].tVideoIconSpriteId = videoIconSpriteId;
-
-    LoadSpritePalette(&sArrowCursor_SpritePalette);
-
-    sArrowCursorSpriteId = CreateSprite(&sArrowCursor_SpriteTemplate, CURSOR_LEFT_X, CURSOR_TOP_Y, 1);
-    gSprites[sArrowCursorSpriteId].callback = SpriteCB_Null;
-    gSprites[sArrowCursorSpriteId].oam.priority = 1;
-    gSprites[sArrowCursorSpriteId].invisible = TRUE;
-
-    LoadPalette(sPhoto_Placeholder_Pals, OBJ_PLTT_ID(12), sizeof(sPhoto_Placeholder_Pals));
-
-    sPhotoPlaceholderM1SpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 30 + 12, 36 + 12, 1);
-    gSprites[sPhotoPlaceholderM1SpriteId].oam.paletteNum = 12;
-    gSprites[sPhotoPlaceholderM1SpriteId].callback = SpriteCB_Null;
-    gSprites[sPhotoPlaceholderM1SpriteId].oam.priority = 1;
-    gSprites[sPhotoPlaceholderM1SpriteId].invisible = TRUE;
-
-    sPhotoPlaceholderM2SpriteId = CreateSprite(&sPhoto_Placeholder_M2_SpriteTemplate, 74 + 12, 36 + 12, 1);
-    gSprites[sPhotoPlaceholderM2SpriteId].oam.paletteNum = 12;
-    gSprites[sPhotoPlaceholderM2SpriteId].callback = SpriteCB_Null;
-    gSprites[sPhotoPlaceholderM2SpriteId].oam.priority = 1;
-    gSprites[sPhotoPlaceholderM2SpriteId].invisible = TRUE;
-
-    sPhotoPlaceholderF1SpriteId = CreateSprite(&sPhoto_Placeholder_F1_SpriteTemplate, 118 + 12, 36 + 12, 1);
-    gSprites[sPhotoPlaceholderF1SpriteId].oam.paletteNum = 12;
-    gSprites[sPhotoPlaceholderF1SpriteId].callback = SpriteCB_Null;
-    gSprites[sPhotoPlaceholderF1SpriteId].oam.priority = 1;
-    gSprites[sPhotoPlaceholderF1SpriteId].invisible = TRUE;
-
-    sPhotoPlaceholderF2SpriteId = CreateSprite(&sPhoto_Placeholder_F2_SpriteTemplate, 162 + 12, 36 + 12, 1);
-    gSprites[sPhotoPlaceholderF2SpriteId].oam.paletteNum = 12;
-    gSprites[sPhotoPlaceholderF2SpriteId].callback = SpriteCB_Null;
-    gSprites[sPhotoPlaceholderF2SpriteId].oam.priority = 1;
-    gSprites[sPhotoPlaceholderF2SpriteId].invisible = TRUE;
-
-    sPhotoPlaceholderASpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 30 + 12, 80 + 12, 1);
-    gSprites[sPhotoPlaceholderASpriteId].oam.paletteNum = 12;
-    gSprites[sPhotoPlaceholderASpriteId].callback = SpriteCB_Null;
-    gSprites[sPhotoPlaceholderASpriteId].oam.priority = 1;
-    gSprites[sPhotoPlaceholderASpriteId].invisible = TRUE;
-
-    sPhotoPlaceholderBSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 74 + 12, 80 + 12, 1);
-    gSprites[sPhotoPlaceholderBSpriteId].oam.paletteNum = 13;
-    gSprites[sPhotoPlaceholderBSpriteId].callback = SpriteCB_Null;
-    gSprites[sPhotoPlaceholderBSpriteId].oam.priority = 1;
-    gSprites[sPhotoPlaceholderBSpriteId].invisible = TRUE;
-
-    sPhotoPlaceholderCSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 118 + 12, 80 + 12, 1);
-    gSprites[sPhotoPlaceholderCSpriteId].oam.paletteNum = 14;
-    gSprites[sPhotoPlaceholderCSpriteId].callback = SpriteCB_Null;
-    gSprites[sPhotoPlaceholderCSpriteId].oam.priority = 1;
-    gSprites[sPhotoPlaceholderCSpriteId].invisible = TRUE;
-
-    sPhotoPlaceholderDSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 162 + 12, 80 + 12, 1);
-    gSprites[sPhotoPlaceholderDSpriteId].oam.paletteNum = 15;
-    gSprites[sPhotoPlaceholderDSpriteId].callback = SpriteCB_Null;
-    gSprites[sPhotoPlaceholderDSpriteId].oam.priority = 1;
-    gSprites[sPhotoPlaceholderDSpriteId].invisible = TRUE;
 
     LoadSpritePalette(&sCall_Window_SpritePalette);
 
@@ -1230,6 +1167,88 @@ static void AddComputerBackgroundObjects_ReturnFromNamingScreen(u8 taskId)
     gSprites[gTasks[taskId].tCallWindowScalable3SpriteId].invisible = TRUE;
 
     SetOamMatrixRotationScaling(matrixNum, 10, 10, 0);
+}
+
+static void LoadComputerPlayerIcons(u8 taskId)
+{
+    FreeSpriteTiles(&gSprites[gTasks[taskId].tCallWindowScalable0SpriteId]);
+    FreeSpriteOamMatrix(&gSprites[gTasks[taskId].tCallWindowScalable0SpriteId]);
+    DestroySprite(&gSprites[gTasks[taskId].tCallWindowScalable0SpriteId]);
+
+    FreeSpriteTiles(&gSprites[gTasks[taskId].tCallWindowScalable1SpriteId]);
+    FreeSpriteOamMatrix(&gSprites[gTasks[taskId].tCallWindowScalable1SpriteId]);
+    DestroySprite(&gSprites[gTasks[taskId].tCallWindowScalable1SpriteId]);
+
+    FreeSpriteTiles(&gSprites[gTasks[taskId].tCallWindowScalable2SpriteId]);
+    FreeSpriteOamMatrix(&gSprites[gTasks[taskId].tCallWindowScalable2SpriteId]);
+    DestroySprite(&gSprites[gTasks[taskId].tCallWindowScalable2SpriteId]);
+
+    FreeSpriteTiles(&gSprites[gTasks[taskId].tCallWindowScalable3SpriteId]);
+    FreeSpriteOamMatrix(&gSprites[gTasks[taskId].tCallWindowScalable3SpriteId]);
+    DestroySprite(&gSprites[gTasks[taskId].tCallWindowScalable3SpriteId]);
+
+    LoadCompressedSpriteSheet(&sPhoto_Placeholder_M1_SpriteSheet);
+    LoadCompressedSpriteSheet(&sPhoto_Placeholder_M2_SpriteSheet);
+    LoadCompressedSpriteSheet(&sPhoto_Placeholder_F1_SpriteSheet);
+    LoadCompressedSpriteSheet(&sPhoto_Placeholder_F2_SpriteSheet);
+    LoadCompressedSpriteSheet(&sArrowCursor_SpriteSheet);
+
+    LoadSpritePalette(&sArrowCursor_SpritePalette);
+
+    sArrowCursorSpriteId = CreateSprite(&sArrowCursor_SpriteTemplate, CURSOR_LEFT_X, CURSOR_TOP_Y, 1);
+    gSprites[sArrowCursorSpriteId].callback = SpriteCB_Null;
+    gSprites[sArrowCursorSpriteId].oam.priority = 1;
+    gSprites[sArrowCursorSpriteId].invisible = TRUE;
+
+    LoadPalette(sPhoto_Placeholder_Pals, OBJ_PLTT_ID(12), sizeof(sPhoto_Placeholder_Pals));
+
+    sPhotoPlaceholderM1SpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 30 + 12, 36 + 12, 1);
+    gSprites[sPhotoPlaceholderM1SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderM1SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderM1SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderM1SpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderM2SpriteId = CreateSprite(&sPhoto_Placeholder_M2_SpriteTemplate, 74 + 12, 36 + 12, 1);
+    gSprites[sPhotoPlaceholderM2SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderM2SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderM2SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderM2SpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderF1SpriteId = CreateSprite(&sPhoto_Placeholder_F1_SpriteTemplate, 118 + 12, 36 + 12, 1);
+    gSprites[sPhotoPlaceholderF1SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderF1SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderF1SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderF1SpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderF2SpriteId = CreateSprite(&sPhoto_Placeholder_F2_SpriteTemplate, 162 + 12, 36 + 12, 1);
+    gSprites[sPhotoPlaceholderF2SpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderF2SpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderF2SpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderF2SpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderASpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 30 + 12, 80 + 12, 1);
+    gSprites[sPhotoPlaceholderASpriteId].oam.paletteNum = 12;
+    gSprites[sPhotoPlaceholderASpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderASpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderASpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderBSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 74 + 12, 80 + 12, 1);
+    gSprites[sPhotoPlaceholderBSpriteId].oam.paletteNum = 13;
+    gSprites[sPhotoPlaceholderBSpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderBSpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderBSpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderCSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 118 + 12, 80 + 12, 1);
+    gSprites[sPhotoPlaceholderCSpriteId].oam.paletteNum = 14;
+    gSprites[sPhotoPlaceholderCSpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderCSpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderCSpriteId].invisible = TRUE;
+
+    sPhotoPlaceholderDSpriteId = CreateSprite(&sPhoto_Placeholder_M1_SpriteTemplate, 162 + 12, 80 + 12, 1);
+    gSprites[sPhotoPlaceholderDSpriteId].oam.paletteNum = 15;
+    gSprites[sPhotoPlaceholderDSpriteId].callback = SpriteCB_Null;
+    gSprites[sPhotoPlaceholderDSpriteId].oam.priority = 1;
+    gSprites[sPhotoPlaceholderDSpriteId].invisible = TRUE;
 }
 
 static void Task_KukuiCall_GettingACall(u8 taskId)
@@ -1551,6 +1570,8 @@ static void Task_AlolaIsARegion(u8 taskId)
     {
         if (gTasks[taskId].tCount == 30)
         {
+
+
             BeginLayerFace(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
         }
         else if (gTasks[taskId].tCount == 31)
@@ -1812,6 +1833,8 @@ static void Task_AndYouAre(u8 taskId)
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
             gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+            LoadComputerPlayerIcons(taskId);
 
             ShowBg(2);
             ShowBg(1);
