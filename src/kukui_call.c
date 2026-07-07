@@ -1993,7 +1993,13 @@ static void Task_WhichPhoto(u8 taskId)
             // gSprites[sPhotoPlaceholderBSpriteId].invisible = TRUE;
             // gSprites[sPhotoPlaceholderCSpriteId].invisible = TRUE;
             // gSprites[sPhotoPlaceholderDSpriteId].invisible = TRUE;
-            // BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 16, 0, RGB_WHITE);
+
+            // Copy the white palettes for the 2 visible BG layers to their unfaded forms, so when we start the fade to black they stay white
+            // This means we need to reload them, but we do that when returning from the naming screen anyways
+            FastUnsafeCopy32(&gPlttBufferUnfaded[BG_PLTT_ID(1)], &gPlttBufferFaded[BG_PLTT_ID(1)], PLTT_SIZE_4BPP);
+            FastUnsafeCopy32(&gPlttBufferUnfaded[BG_PLTT_ID(2)], &gPlttBufferFaded[BG_PLTT_ID(2)], PLTT_SIZE_4BPP);
+
+            BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
 
             gSaveBlock2Ptr->playerGender = (sTopSelect == 0 || sTopSelect == 1) ? MALE : FEMALE;
             gTasks[taskId].tTimer = 0;
