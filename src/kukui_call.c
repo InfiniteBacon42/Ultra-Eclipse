@@ -2213,6 +2213,7 @@ static void Task_EndCall(u8 taskId)
             SW0.invisible = SW1.invisible = SW2.invisible = SW3.invisible = FALSE;
             BlendPalette(OBJ_PLTT_ID(IndexOfSpritePaletteTag(PAL_TAG_CALL_WINDOW)) + 8, 1, 16, RGB_WHITE);
             PlaySE(SE_POKENAV_OFF);
+            FadeOutBGM(10);
             gTasks[taskId].tTimer = 0;
             gTasks[taskId].tState = 1;
         }
@@ -2274,7 +2275,7 @@ static void Task_EndCall(u8 taskId)
 
     if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tState == 2)
     {
-        BeginNormalPaletteFade(PALETTES_ALL, 20, 0, 16, RGB_BLACK);
+        BeginNormalPaletteFade(PALETTES_ALL, 10, 0, 16, RGB_BLACK);
         gTasks[taskId].tTimer = 0;
         gTasks[taskId].tState = 0;
         gTasks[taskId].func = Task_Cleanup;
@@ -2283,12 +2284,7 @@ static void Task_EndCall(u8 taskId)
 
 static void Task_Cleanup(u8 taskId)
 {
-    if (!gPaletteFade.active && !gTasks[taskId].tState)
-    {
-        FadeOutBGM(4);
-        gTasks[taskId].tState++;
-    }
-    else if (IsBGMStopped())
+    if (!gPaletteFade.active)
     {
         FreeAllWindowBuffers();
         SetMainCallback2(CB2_NewGame); // comment this out and uncomment the two lines below for a clock at newgame
