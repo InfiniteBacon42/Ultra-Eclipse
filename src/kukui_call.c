@@ -687,7 +687,7 @@ static void HBlankCB_KukuiCall(void)
 {
     u16 vCount = REG_VCOUNT;
 
-    if (vCount >= TEXT_BG_START)
+    if (vCount >= TEXT_BG_START && vCount < 160)
     {
         sShouldUpdateLayerFade = TRUE;
 
