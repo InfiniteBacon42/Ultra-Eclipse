@@ -90,13 +90,13 @@ gText_Kukui_WhatsYourName::
 
 @ Naming screen multichoice
 gText_Kukui_SoItsPlayer::
-	.string "So, you go by {PLAYER}{KUN}?$" @ multichoice stuff?
+	.string "So, you go by {PLAYER}{KUN}?\p $" @ multichoice stuff?
 
 @ Fades to black, switches to Computer_Background1, Call_Background2, and Kukui5, now with selected photo sprite visible
 gText_Kukui_YourePlayer::
 	.string "10-4, good buddy! I'll let everybody out\n"
 	.string "here know you're on your way!\p"
-	.string "$"
+	.string " $"
 
 @ Kukui5a (shifts 2 tiles left), Rockruff appears
 gText_Kukui_AreYouReady::
@@ -105,7 +105,7 @@ gText_Kukui_AreYouReady::
 	.string "Trop Kick right to the head! Woo!\p"
 	.string "Can't wait to see you here in person\n"
 	.string "then, cousin!\p"
-	.string "$"
+	.string " $"
 @ Kukui5a to Kukui4a and Rockruff to Rockruff_b (Rockruff hFlipped, both shifted so 1 non-empty tile-column of each is offscreen)
 @ After a beat, Rockruff_b disappears and Kukui4a to Kukui3
 @ Another beat, Call Window closes
