@@ -1984,11 +1984,6 @@ static void CB2_NewGameKukuiCall_ReturnFromNamingScreen(void)
     gTasks[taskId].tTimer = 0;
     gTasks[taskId].tState = 0;
 
-    LoadTilesMapAndPalAtOffset(3, sComputer_Background_Tiles, PC_BG_BASE_TILE_NUM,                                     0, sComputer_Background_Tilemap, PC_BG_HEIGHT,   PC_BG_SCREEN_INDEX,                                     sComputer_Background_Pals, 0, TRUE);
-    LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles,    USED_CALL_BG_BTN(gTasks[taskId].tFreeCallBgBaseTileNum), 1, sCall_Background2_Tilemap,    CALL_BG_HEIGHT, USED_CALL_BG_SI(gTasks[taskId].tFreeCallBgScreenIndex), sCall_Background_Pals, 2, FALSE);
-    LoadTilesMapAndPalAtOffset(1, sKukui5_Tiles,              USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum),    0, sKukui5_Tilemap,              CALL_BG_HEIGHT, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex),    sKukui_Pals, 1, FALSE);
-    ShowTextBoxBackground();
-
     ScanlineEffect_Stop();
     ResetSpriteData();
     FreeAllSpritePalettes();
@@ -2002,9 +1997,6 @@ static void CB2_NewGameKukuiCall_ReturnFromNamingScreen(void)
     SetGpuReg(REG_OFFSET_BLDALPHA, BLDALPHA_BLEND(16, 0));
     SetGpuReg(REG_OFFSET_BLDY, 0);
 
-    ShowBg(1);
-    ShowBg(2);
-    ShowBg(3);
     sLastVCount = -1;
     sLayerFadeActive = FALSE;
     sShouldLayerFade = FALSE; 
@@ -2020,6 +2012,14 @@ static void CB2_NewGameKukuiCall_ReturnFromNamingScreen(void)
     LoadPalette(sMainMenuTextPal, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
     PutWindowTilemap(0);
     CopyWindowToVram(0, COPYWIN_FULL);
+
+    LoadTilesMapAndPalAtOffset(3, sComputer_Background_Tiles, PC_BG_BASE_TILE_NUM,                                     0, sComputer_Background_Tilemap, PC_BG_HEIGHT,   PC_BG_SCREEN_INDEX,                                     sComputer_Background_Pals, 0, FALSE);
+    LoadTilesMapAndPalAtOffset(2, sCall_Background2_Tiles,    USED_CALL_BG_BTN(gTasks[taskId].tFreeCallBgBaseTileNum), 1, sCall_Background2_Tilemap,    CALL_BG_HEIGHT, USED_CALL_BG_SI(gTasks[taskId].tFreeCallBgScreenIndex), sCall_Background_Pals, 2, FALSE);
+    LoadTilesMapAndPalAtOffset(1, sKukui5_Tiles,              USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum),    0, sKukui5_Tilemap,              CALL_BG_HEIGHT, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex),    sKukui_Pals, 1, FALSE);
+    ShowTextBoxBackground();
+    ShowBg(1);
+    ShowBg(2);
+    ShowBg(3);
 }
 
 static void Task_SoItsPlayer(u8 taskId)
@@ -2030,9 +2030,6 @@ static void Task_SoItsPlayer(u8 taskId)
     {
         if (!gTasks[taskId].tTimer)
         {
-            LoadTilemapAtOffset(1, USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5_Tilemap, CALL_BG_HEIGHT, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 1);
-            ShowBg(1);
-
             StringExpandPlaceholders(gStringVar4, gText_Kukui_SoItsPlayer);
             AddTextPrinterForMessageKukui(TRUE);
             // BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
