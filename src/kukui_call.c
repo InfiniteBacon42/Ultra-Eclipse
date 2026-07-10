@@ -1258,16 +1258,12 @@ static void Task_LaunchCall(u8 taskId)
 
             SW0.y = SW1.y = -sY;
             SW2.y = SW3.y = 3*sY;
-
-            if (frame == LC_SCALE_LENGTH)
-            {
-                CW_NW.invisible = CW_N.invisible = CW_NE.invisible = CW_SE.invisible = CW_S.invisible = CW_SW.invisible = CW_UI.invisible = NOTIFICATION_ICON.invisible = FALSE;
-            }
         }
         else if (gTasks[taskId].tTimer == LC_LAUNCH_LENGTH)
         {
             SW0.invisible = SW1.invisible = SW2.invisible = SW3.invisible = TRUE;
-
+            CW_NW.invisible = CW_N.invisible = CW_NE.invisible = CW_SE.invisible = CW_S.invisible = CW_SW.invisible = CW_UI.invisible = NOTIFICATION_ICON.invisible = FALSE;
+ 
             FillPalette(0xFFFF, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
             FillPalette(0xFFFF, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
 
