@@ -2231,7 +2231,7 @@ static void Task_EndCall(u8 taskId)
                 HideBg(2);
             }
 
-            u8 frame = LC_SCALE_LENGTH - gTasks[taskId].tTimer;
+            u8 frame = LC_SCALE_LENGTH - gTasks[taskId].tTimer + 1;
 
             BlendPalette(OBJ_PLTT_ID(IndexOfSpritePaletteTag(PAL_TAG_CALL_WINDOW)) + 8, 1, 16 * frame / LC_SCALE_LENGTH, RGB_WHITE);
 
