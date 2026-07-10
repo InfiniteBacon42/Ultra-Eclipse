@@ -201,7 +201,7 @@ static const struct BgTemplate sBgTemplates[] =
         .mapBaseIndex = ROCKRUFF_SCREEN_INDEX,
         .screenSize = 0,
         .paletteMode = 0,
-        .priority = 1,
+        .priority = 2,
         .baseTile = 0
     },
     {
@@ -210,7 +210,7 @@ static const struct BgTemplate sBgTemplates[] =
         .mapBaseIndex = KUKUI_1_SCREEN_INDEX,
         .screenSize = 0,
         .paletteMode = 0,
-        .priority = 1,
+        .priority = 2,
         .baseTile = 0
     },
     {
@@ -954,12 +954,12 @@ static void AddComputerBackgroundObjects(u8 taskId)
 
     LoadSpritePalette(&sSettings_Icon_SpritePalette);
     gTasks[taskId].tSettingsIconSpriteId = CreateSprite(&sSettings_Icon_SpriteTemplate, SETTINGS_X, SETTINGS_Y, 1);
-    SETTINGS_ICON.oam.priority = 1;
+    SETTINGS_ICON.oam.priority = 2;
     SETTINGS_ICON.invisible = FALSE;
     
     LoadSpritePalette(&sCamera_Icon_SpritePalette);
     gTasks[taskId].tCameraIconSpriteId = CreateSprite(&sCamera_Icon_SpriteTemplate, CAMERA_X, CAMERA_Y, 1);
-    CAMERA_ICON.oam.priority = 1;
+    CAMERA_ICON.oam.priority = 2;
     CAMERA_ICON.invisible = FALSE;
 
     LoadSpritePalette(&sNotification_Icon_SpritePalette);
