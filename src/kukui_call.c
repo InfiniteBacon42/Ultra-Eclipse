@@ -2282,7 +2282,12 @@ static void Task_EndCall(u8 taskId)
 
 static void Task_Cleanup(u8 taskId)
 {
-    if (!gPaletteFade.active)
+    if (!gPaletteFade.active && !gTasks[taskId].tState)
+    {
+        FadeOutBGM(4);
+        gTasks[taskId].tState++;
+    }
+    else if (IsBGMStopped())
     {
         FreeAllWindowBuffers();
         SetMainCallback2(CB2_NewGame); // comment this out and uncomment the two lines below for a clock at newgame
