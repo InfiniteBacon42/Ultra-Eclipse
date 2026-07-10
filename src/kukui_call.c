@@ -1602,8 +1602,8 @@ static void Task_AllOver(u8 taskId)
             LoadTilesAndMapAtOffset(   1, sKukui5_Tiles,   gTasks[taskId].tFreeKukuiBaseTileNum,  0, sKukui5a_Tilemap,  CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
             LoadTilesMapAndPalAtOffset(0, sRockruff_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum, 1, sRockruff_Tilemap, CALL_BG_HEIGHT, ROCKRUFF_SCREEN_INDEX, sRockruff_Pals, 3, TRUE);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), CALL_BG_HEIGHT, TEXTBOX_HEIGHT);
-            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
-            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX + 1), 20 * 32 * 2);
+            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX) + (32 * 14 * 2), 18 * 32 * 2);
+            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX + 1), 32 * 32 * 2);
             gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
 
@@ -2101,8 +2101,8 @@ static void Task_AreYouReady(u8 taskId)
             LoadTilemapAtOffset(       1,                  USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5a_Tilemap,  CALL_BG_HEIGHT, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 1);
             LoadTilesMapAndPalAtOffset(0, sRockruff_Tiles, gTasks[taskId].tFreeCallBgBaseTileNum,                1, sRockruff_Tilemap, CALL_BG_HEIGHT, ROCKRUFF_SCREEN_INDEX, sRockruff_Pals, 3, TRUE);
             // CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
-            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX) + (32 * 14 * 2), 6 * 32 * 2);
-            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX + 1), 20 * 32 * 2);
+            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX) + (32 * 14 * 2), 18 * 32 * 2);
+            DmaFill16(3, (BLANK_TILE_2 - 0x200) | (0xF << 12), BG_SCREEN_ADDR(ROCKRUFF_SCREEN_INDEX + 1), 32 * 32 * 2);
             // gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
             // gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
 
