@@ -2212,6 +2212,7 @@ static void Task_EndCall(u8 taskId)
         {
             SW0.invisible = SW1.invisible = SW2.invisible = SW3.invisible = FALSE;
             BlendPalette(OBJ_PLTT_ID(IndexOfSpritePaletteTag(PAL_TAG_CALL_WINDOW)) + 8, 1, 16, RGB_WHITE);
+            PlaySE(SE_POKENAV_OFF);
             gTasks[taskId].tTimer = 0;
             gTasks[taskId].tState = 1;
         }
