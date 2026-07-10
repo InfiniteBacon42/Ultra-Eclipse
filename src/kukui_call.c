@@ -593,6 +593,12 @@ static bool8 IsLayerFadeActive()
     return sShouldLayerFade || sLayerFadeActive;
 }
 
+static void PrepareForLayerFace(u16 targets, u8 startY)
+{
+    sLayerFadeY = startY;
+    sLayerFadeBldCnt = targets | BLDCNT_EFFECT_BLEND;
+}
+
 static void BeginLayerFade(u16 targets, s8 delay, u8 startY, u8 targetY)
 {
     sLayerFadeDeltaY = 2;
@@ -1612,6 +1618,10 @@ static void Task_AllOver(u8 taskId)
         }
         else if (gTasks[taskId].tTimer == 65)
         {
+            PrepareForLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
+        }
+        else if (gTasks[taskId].tTimer == 66)
+        {
             BeginNormalPaletteFade(1 << 3, 0, 16, 0, RGB_RED);
             BeginLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
             StringExpandPlaceholders(gStringVar4, gText_Kukui_AllOver);
@@ -1677,6 +1687,10 @@ static void Task_LoveOurPokemon(u8 taskId)
             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
         }
         else if (gTasks[taskId].tTimer == 34)
+        {
+            PrepareForLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
+        }
+        else if (gTasks[taskId].tTimer == 35)
         {
             BeginLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
             ShowBg(0);
@@ -2111,6 +2125,10 @@ static void Task_AreYouReady(u8 taskId)
         }
         else if (gTasks[taskId].tTimer == 33)
         {
+            PrepareForLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
+        }
+        else if (gTasks[taskId].tTimer == 34)
+        {
             BeginNormalPaletteFade(1 << 3, 0, 16, 0, RGB_RED);
             BeginLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
             StringExpandPlaceholders(gStringVar4, gText_Kukui_AreYouReady);
@@ -2163,6 +2181,10 @@ static void Task_EndCall(u8 taskId)
             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
         }
         else if (gTasks[taskId].tTimer == 4)
+        {
+            PrepareForLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
+        }
+        else if (gTasks[taskId].tTimer == 5)
         {
             ShowBg(0);
             BeginLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
