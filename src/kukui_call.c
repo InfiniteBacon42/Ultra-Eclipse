@@ -1505,13 +1505,13 @@ static void Task_CoolPokemon(u8 taskId)
 {
     UpdatePaletteFade();
 
-    if (!gTasks[taskId].tTimer && !gPaletteFade.active && !IsLayerFadeActive())
+    if (!gTasks[taskId].tState && !gPaletteFade.active && !IsLayerFadeActive())
     {
-        if (gTasks[taskId].tState == 0)
+        if (gTasks[taskId].tTimer == 0)
         {
             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
         }
-        else if (gTasks[taskId].tState == 1)
+        else if (gTasks[taskId].tTimer == 1)
         {
             LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), CALL_BG_HEIGHT, TEXTBOX_HEIGHT);
@@ -1521,18 +1521,18 @@ static void Task_CoolPokemon(u8 taskId)
             ShowBg(2);
             ShowBg(1);
         }
-        else if (gTasks[taskId].tState == 2)
+        else if (gTasks[taskId].tTimer == 2)
         {
             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
 
             StringExpandPlaceholders(gStringVar4, gText_Kukui_CoolPokemon);
             AddTextPrinterForMessageKukui(TRUE);
         }
-        else if (gTasks[taskId].tState == 62)
+        else if (gTasks[taskId].tTimer == 62)
         {
             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
         }
-        else if (gTasks[taskId].tState == 63)
+        else if (gTasks[taskId].tTimer == 63)
         {
             LoadTilesAndMapAtOffset(1, sKukui7_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui7_Tilemap, CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), CALL_BG_HEIGHT, TEXTBOX_HEIGHT);
@@ -1542,16 +1542,16 @@ static void Task_CoolPokemon(u8 taskId)
             ShowBg(2);
             ShowBg(1);
         }
-        else if (gTasks[taskId].tState == 64)
+        else if (gTasks[taskId].tTimer == 64)
         {
             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
-            gTasks[taskId].tTimer = 1;
+            gTasks[taskId].tState = 1;
         }
 
-        gTasks[taskId].tState++;
+        gTasks[taskId].tTimer++;
     }
 
-    if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tTimer)
+    if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tState)
     {
         gTasks[taskId].tTimer = -30;
         gTasks[taskId].tState = 0;
