@@ -593,7 +593,7 @@ static bool8 IsLayerFadeActive()
     return sShouldLayerFade || sLayerFadeActive;
 }
 
-static void PrepareForLayerFace(u16 targets, u8 startY)
+static void PrepareForLayerFade(u16 targets, u8 startY)
 {
     sLayerFadeY = startY;
     sLayerFadeBldCnt = targets | BLDCNT_EFFECT_BLEND;
@@ -1587,16 +1587,18 @@ static void Task_AllOver(u8 taskId)
         else if (gTasks[taskId].tTimer == 32)
         {
             PlaySE(SE_BALL_OPEN);
+            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 0, 16, RGB_CYAN);
         }
-        else if (gTasks[taskId].tTimer == 57)
+        else if (gTasks[taskId].tTimer == 37)
+        {
+            BeginNormalPaletteFade(1 << 1 | 1 << 2, 0, 16, 0, RGB_CYAN);
+        }
+        else if (gTasks[taskId].tTimer == 62 - 20)
         {
             PlayCry_Normal(SPECIES_ROCKRUFF, 0);
+            PrepareForLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
         }
-        else if (gTasks[taskId].tTimer == 62)
-        {
-            BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
-        }
-        else if (gTasks[taskId].tTimer == 63)
+        else if (gTasks[taskId].tTimer == 63 - 20)
         {
             assertf(gTasks[taskId].tFreeCallBgScreenIndex == ROCKRUFF_SCREEN_INDEX + 1);
             SetBgAttribute(0, BG_ATTR_SCREENSIZE, 1);
@@ -1610,36 +1612,36 @@ static void Task_AllOver(u8 taskId)
             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
 
             ShowBg(2);
-            ShowBg(1);
+            ShowBg(0);
         }
-        else if (gTasks[taskId].tTimer == 64)
-        {
-            BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
-        }
-        else if (gTasks[taskId].tTimer == 65)
-        {
-            PrepareForLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
-        }
-        else if (gTasks[taskId].tTimer == 66)
+        else if (gTasks[taskId].tTimer == 64 - 20)
         {
             BeginNormalPaletteFade(1 << 3, 0, 16, 0, RGB_RED);
             BeginLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
+        }
+        else if (gTasks[taskId].tTimer == 65 - 20)
+        {
+            BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
+        }
+        else if (gTasks[taskId].tTimer == 66 - 20)
+        {
+            BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
             StringExpandPlaceholders(gStringVar4, gText_Kukui_AllOver);
             AddTextPrinterForMessageKukui(TRUE);
             gTasks[taskId].tState = 1;
-            ShowBg(0);
+            ShowBg(1);
         }
 
         gTasks[taskId].tTimer++;
     }
 
-    if (gTasks[taskId].tState && !IsLayerFadeActive())
-    {
-        static u16 rockruffOffset = 0;
+    // if (gTasks[taskId].tState && !IsLayerFadeActive())
+    // {
+    //     static u16 rockruffOffset = 0;
 
-        sShouldChopRockruff = TRUE;
-        SetGpuReg(REG_OFFSET_BG0HOFS, (rockruffOffset += 4) % 512);
-    }
+    //     sShouldChopRockruff = TRUE;
+    //     SetGpuReg(REG_OFFSET_BG0HOFS, (rockruffOffset += 4) % 512);
+    // }
 
     if (!RunTextPrintersAndIsPrinter0Active() && gTasks[taskId].tState)
     {
@@ -1688,7 +1690,7 @@ static void Task_LoveOurPokemon(u8 taskId)
         }
         else if (gTasks[taskId].tTimer == 34)
         {
-            PrepareForLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
+            PrepareForLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
         }
         else if (gTasks[taskId].tTimer == 35)
         {
@@ -2125,7 +2127,7 @@ static void Task_AreYouReady(u8 taskId)
         }
         else if (gTasks[taskId].tTimer == 33)
         {
-            PrepareForLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
+            PrepareForLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
         }
         else if (gTasks[taskId].tTimer == 34)
         {
@@ -2182,7 +2184,7 @@ static void Task_EndCall(u8 taskId)
         }
         else if (gTasks[taskId].tTimer == 4)
         {
-            PrepareForLayerFace(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
+            PrepareForLayerFade(BLDCNT_TGT1_BG0 | BLDCNT_TGT2_BG_ALL, 16);
         }
         else if (gTasks[taskId].tTimer == 5)
         {
