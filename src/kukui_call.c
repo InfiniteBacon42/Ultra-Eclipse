@@ -47,15 +47,21 @@ static void Task_YourePlayer(u8);
 static void Task_AreYouReady(u8);
 static void Task_EndCall(u8);
 static void Task_Cleanup(u8);
-static void Task_TestLoop(u8);
+// static void Task_TestLoop(u8);
 
-static void SpriteCB_Null(struct Sprite *sprite);
-static void NewGameKukuiCall_PrintNameplate(void);
+static void Task_CreatePhotoYesNo(u8);
+static void Task_ProcessPhotoYesNoMenu(u8);
+static void Task_CreateNameYesNo(u8);
+static void Task_ProcessNameYesNoMenu(u8);
+
+// static void NewGameKukuiCall_PrintNameplate(void);
 static void AddComputerBackgroundObjects(u8);
 static void AddComputerBackgroundObjects_ReturnFromNamingScreen(u8);
 static void LoadComputerPassportPhotos(u8);
 
 extern void FastUnsafeCopy32(void *dst, const void *src, u32 size);
+
+static void KukuiCreateYesNoMenuParameterized(u8 bg, u8 x, u8 y, u16 baseTileNum, u16 baseBlock, u8 yesNoPalNum, u8 winPalNum);
 
 extern const struct OamData gOamData_AffineDouble_ObjNormal_64x32;
 extern const struct OamData gOamData_AffineOff_ObjNormal_64x64;
@@ -1056,7 +1062,7 @@ static void AddComputerBackgroundObjects_ReturnFromNamingScreen(u8 taskId)
     
     PP_M1.oam.paletteNum = 12;
     PP_M1.oam.priority = 1;
-    PP_M1.invisible = FALSE;
+    PP_M1.invisible = TRUE;
 
     LoadSpritePalette(&sCall_Window_SpritePalette);
 
@@ -1971,7 +1977,8 @@ static void Task_WhichPhoto(u8 taskId)
             CopyWindowToVram(0, COPYWIN_GFX);
             StringExpandPlaceholders(gStringVar4, gText_Kukui_ChoiceOK);
             AddTextPrinterForMessageKukui(TRUE);
-            gTasks[taskId].tState = 1;
+            gTasks[taskId].func = Task_CreatePhotoYesNo;
+            // gTasks[taskId].tState = 1;
         }
         else if (JOY_NEW(DPAD_LEFT))
         {
@@ -2045,70 +2052,6 @@ static void Task_StartNamingScreen(u8 taskId)
         NewGameBirchSpeech_SetRandomDefaultPlayerName();
         DestroyTask(taskId);
         DoNamingScreen(NAMING_SCREEN_PLAYER, gSaveBlock2Ptr->playerName, gSaveBlock2Ptr->playerGender, 0, 0, CB2_NewGameKukuiCall_ReturnFromNamingScreen);
-    }
-}
-
-static void Task_TestLoop(u8 taskId)
-{
-    UpdatePaletteFade();
-
-    if (!gPaletteFade.active && !IsLayerFadeActive())
-    {
-        if (!gTasks[taskId].tState)
-        {
-            BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
-        }
-        else if (gTasks[taskId].tState == 1)
-        {
-            if (!gTasks[taskId].tTimer)
-            {
-                LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
-                gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
-                gTasks[taskId].tTimer = 1;
-            }
-            else
-                LoadTilemapAtOffset(1, USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5_Tilemap, CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
-            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), CALL_BG_HEIGHT, TEXTBOX_HEIGHT);
-            
-            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
-
-            ShowBg(2);
-            ShowBg(1);
-        }
-        else if (gTasks[taskId].tState == 2)
-        {
-            BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
-        }
-        else if (gTasks[taskId].tState == 62)
-        {
-            BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
-        }
-        else if (gTasks[taskId].tState == 63)
-        {
-            LoadTilemapAtOffset(1, USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5a_Tilemap, CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
-            CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), CALL_BG_HEIGHT, TEXTBOX_HEIGHT);
-
-            gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
-
-            ShowBg(2);
-            ShowBg(1);
-        }
-        else if (gTasks[taskId].tState == 64)
-        {
-            BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
-        }
-        else if (gTasks[taskId].tState == 124)
-        {
-            gTasks[taskId].tState = -1;
-        }
-
-        gTasks[taskId].tState++;
-    }
-
-    if (!RunTextPrintersAndIsPrinter0Active())
-    {
-        StringExpandPlaceholders(gStringVar4, gText_Kukui_JustASec);
-        AddTextPrinterForMessageKukui(TRUE);
     }
 }
 
@@ -2195,16 +2138,6 @@ static void Task_SoItsPlayer(u8 taskId)
         {
             StringExpandPlaceholders(gStringVar4, gText_Kukui_SoItsPlayer);
             AddTextPrinterForMessageKukui(TRUE);
-            // BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
-        }
-        else if (gTasks[taskId].tTimer == 1)
-        {
-            // LoadTilemapAtOffset(1, USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5_Tilemap, 14, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 1);
-            // CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), 14, 6);
-        }
-        else if (gTasks[taskId].tTimer == 2)
-        {
-            // BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
             gTasks[taskId].tState = 1;
         }
 
@@ -2215,7 +2148,7 @@ static void Task_SoItsPlayer(u8 taskId)
     {
         gTasks[taskId].tTimer = 0;
         gTasks[taskId].tState = 0;
-        gTasks[taskId].func = Task_YourePlayer;
+        gTasks[taskId].func = Task_CreateNameYesNo; // Task_YourePlayer;
     }
 }
 
@@ -2227,6 +2160,7 @@ static void Task_YourePlayer(u8 taskId)
     {
         if (gTasks[taskId].tTimer == 0)
         {
+            PP_M1.invisible = FALSE;
             StringExpandPlaceholders(gStringVar4, gText_Kukui_YourePlayer);
             AddTextPrinterForMessageKukui(TRUE);
             gTasks[taskId].tState = 1;
@@ -2472,45 +2406,134 @@ static void Task_Cleanup(u8 taskId)
     }
 }
 
-// static void Task_NewGameBirchSpeech_SoItsPlayerName(u8 taskId)
-// {
-//     NewGameBirchSpeech_ClearWindow(0);
-//     StringExpandPlaceholders(gStringVar4, gText_Birch_SoItsPlayer);
-//     NewGameBirchSpeech_PrintDialogue();
-//     gTasks[taskId].func = Task_NewGameBirchSpeech_CreateNameYesNo;
-// }
+static void Task_CreatePhotoYesNo(u8 taskId)
+{
+    if (!RunTextPrintersAndIsPrinter0Active())
+    {
+        KukuiCreateYesNoMenuParameterized(1, 23, 9, 0x2E5, 0x2D1, 2, 15);
+        gTasks[taskId].func = Task_ProcessPhotoYesNoMenu;
+    }
+}
 
-// static void Task_NewGameBirchSpeech_CreateNameYesNo(u8 taskId)
+static void Task_ProcessPhotoYesNoMenu(u8 taskId)
+{
+    switch (Menu_ProcessInputNoWrapClearOnChoose())
+    {
+    case 0:
+        PlaySE(SE_SELECT);
+        FillWindowPixelBuffer(0, PIXEL_FILL(0));
+        CopyWindowToVram(0, COPYWIN_GFX);
+        gTasks[taskId].tState = 1;
+        gTasks[taskId].func = Task_WhichPhoto;
+        break;
+    case MENU_B_PRESSED:
+    case 1:
+        PlaySE(SE_SELECT);
+        FillWindowPixelBuffer(0, PIXEL_FILL(0));
+        CopyWindowToVram(0, COPYWIN_GFX);
+        StringExpandPlaceholders(gStringVar4, gText_Kukui_WhichPhoto);
+        AddTextPrinterForMessageKukui(TRUE);
+        gTasks[taskId].func = Task_WhichPhoto;
+    }
+}
+
+static void Task_CreateNameYesNo(u8 taskId)
+{
+    if (!RunTextPrintersAndIsPrinter0Active())
+    {
+        ShowBg(0);
+        KukuiCreateYesNoMenuParameterized(0, 23, 9, 0x2E5, 0x2D1, 2, 15);
+        gTasks[taskId].func = Task_ProcessNameYesNoMenu;
+    }
+}
+
+static void Task_ProcessNameYesNoMenu(u8 taskId)
+{
+    switch (Menu_ProcessInputNoWrapClearOnChoose())
+    {
+    case 0:
+        PlaySE(SE_SELECT);
+        HideBg(0);
+        FillWindowPixelBuffer(0, PIXEL_FILL(0));
+        CopyWindowToVram(0, COPYWIN_GFX);
+        gTasks[taskId].func = Task_YourePlayer;
+        break;
+    case MENU_B_PRESSED:
+    case 1:
+        PlaySE(SE_SELECT);
+        BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+        gTasks[taskId].func = Task_StartNamingScreen;
+    }
+}
+
+static void KukuiCreateYesNoMenuParameterized(u8 bg, u8 x, u8 y, u16 baseTileNum, u16 baseBlock, u8 yesNoPalNum, u8 winPalNum)
+{
+    struct WindowTemplate template = CreateWindowTemplate(bg, x + 1, y + 1, 5, 4, winPalNum, baseBlock);
+    CreateYesNoMenu(&template, baseTileNum, yesNoPalNum, 0);
+}
+
+// static void Task_TestLoop(u8 taskId)
 // {
+//     UpdatePaletteFade();
+
+//     if (!gPaletteFade.active && !IsLayerFadeActive())
+//     {
+//         if (!gTasks[taskId].tState)
+//         {
+//             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
+//         }
+//         else if (gTasks[taskId].tState == 1)
+//         {
+//             if (!gTasks[taskId].tTimer)
+//             {
+//                 LoadTilesAndMapAtOffset(1, sKukui5_Tiles, gTasks[taskId].tFreeKukuiBaseTileNum, 0, sKukui5_Tilemap, CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+//                 gTasks[taskId].tFreeKukuiBaseTileNum = USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum);
+//                 gTasks[taskId].tTimer = 1;
+//             }
+//             else
+//                 LoadTilemapAtOffset(1, USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5_Tilemap, CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+//             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), CALL_BG_HEIGHT, TEXTBOX_HEIGHT);
+            
+//             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+//             ShowBg(2);
+//             ShowBg(1);
+//         }
+//         else if (gTasks[taskId].tState == 2)
+//         {
+//             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
+//         }
+//         else if (gTasks[taskId].tState == 62)
+//         {
+//             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 0, 16);
+//         }
+//         else if (gTasks[taskId].tState == 63)
+//         {
+//             LoadTilemapAtOffset(1, USED_KUKUI_BTN(gTasks[taskId].tFreeKukuiBaseTileNum), 0, sKukui5a_Tilemap, CALL_BG_HEIGHT, gTasks[taskId].tFreeKukuiScreenIndex, 1);
+//             CopyPartialTilemap(gTasks[taskId].tFreeKukuiScreenIndex, USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex), CALL_BG_HEIGHT, TEXTBOX_HEIGHT);
+
+//             gTasks[taskId].tFreeKukuiScreenIndex = USED_KUKUI_SI(gTasks[taskId].tFreeKukuiScreenIndex);
+
+//             ShowBg(2);
+//             ShowBg(1);
+//         }
+//         else if (gTasks[taskId].tState == 64)
+//         {
+//             BeginLayerFade(BLDCNT_TGT1_BG1 | BLDCNT_TGT2_BG_ALL, 0, 16, 0);
+//         }
+//         else if (gTasks[taskId].tState == 124)
+//         {
+//             gTasks[taskId].tState = -1;
+//         }
+
+//         gTasks[taskId].tState++;
+//     }
+
 //     if (!RunTextPrintersAndIsPrinter0Active())
 //     {
-//         CreateYesNoMenuParameterized(2, 1, 0xF3, 0xDF, 2, 15);
-//         gTasks[taskId].func = Task_NewGameBirchSpeech_ProcessNameYesNoMenu;
+//         StringExpandPlaceholders(gStringVar4, gText_Kukui_JustASec);
+//         AddTextPrinterForMessageKukui(TRUE);
 //     }
-// }
-
-// static void Task_NewGameBirchSpeech_ProcessNameYesNoMenu(u8 taskId)
-// {
-//     switch (Menu_ProcessInputNoWrapClearOnChoose())
-//     {
-//     case 0:
-//         PlaySE(SE_SELECT);
-//         gSprites[gTasks[taskId].tPlayerSpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
-//         NewGameBirchSpeech_StartFadeOutTarget1InTarget2(taskId, 2);
-//         NewGameBirchSpeech_StartFadePlatformIn(taskId, 1);
-//         gTasks[taskId].func = Task_NewGameBirchSpeech_SlidePlatformAway2;
-//         break;
-//     case MENU_B_PRESSED:
-//     case 1:
-//         PlaySE(SE_SELECT);
-//         gTasks[taskId].func = Task_NewGameBirchSpeech_BoyOrGirl;
-//     }
-// }
-
-// void CreateYesNoMenuParameterized(u8 x, u8 y, u16 baseTileNum, u16 baseBlock, u8 yesNoPalNum, u8 winPalNum)
-// {
-//     struct WindowTemplate template = CreateWindowTemplate(0, x + 1, y + 1, 5, 4, winPalNum, baseBlock);
-//     CreateYesNoMenu(&template, baseTileNum, yesNoPalNum, 0);
 // }
 
 // static void NewGameKukuiCall_PrintNameplate(void)
