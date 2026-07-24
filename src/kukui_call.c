@@ -1937,84 +1937,87 @@ static void Task_WhichPhoto(u8 taskId)
 {
     UpdatePaletteFade();
 
-    if (IsTextPrinterActiveOnWindow(0))
+    if (!IsTextPrinterActiveOnWindow(0))
     {
-
-    }
-    else if (gTasks[taskId].tPaletteSelect < 0)
-    {
-        if (JOY_NEW(A_BUTTON | DPAD_DOWN))
-        {
-            PP_A.invisible = PP_B.invisible = PP_C.invisible = PP_D.invisible = FALSE;
-            
-            if (JOY_NEW(A_BUTTON))
-                gTasks[taskId].tPaletteSelect = 0;
-            else
-                gTasks[taskId].tPaletteSelect = gTasks[taskId].tModelSelect;
-        }
-        else if (JOY_NEW(DPAD_LEFT))
-        {
-            gTasks[taskId].tModelSelect = (gTasks[taskId].tModelSelect == 0) ? 3 : gTasks[taskId].tModelSelect - 1;
-        }
-        else if (JOY_NEW(DPAD_RIGHT))
-        {
-            gTasks[taskId].tModelSelect = (gTasks[taskId].tModelSelect == 3) ? 0 : gTasks[taskId].tModelSelect + 1;
-        }
-    }
-    else
-    {
-        if (JOY_NEW(B_BUTTON | DPAD_UP))
-        {
-            PP_A.invisible = PP_B.invisible = PP_C.invisible = PP_D.invisible = TRUE;
-            
-            if (JOY_NEW(DPAD_UP))
-                gTasks[taskId].tModelSelect = gTasks[taskId].tPaletteSelect;
-            gTasks[taskId].tPaletteSelect = -1;
-        }
-        else if (JOY_NEW(A_BUTTON))
-        {
-            FillWindowPixelBuffer(0, PIXEL_FILL(0));
-            CopyWindowToVram(0, COPYWIN_GFX);
-            StringExpandPlaceholders(gStringVar4, gText_Kukui_ChoiceOK);
-            AddTextPrinterForMessageKukui(TRUE);
-            gTasks[taskId].func = Task_CreatePhotoYesNo;
-            // gTasks[taskId].tState = 1;
-        }
-        else if (JOY_NEW(DPAD_LEFT))
-        {
-            gTasks[taskId].tPaletteSelect = (gTasks[taskId].tPaletteSelect == 0) ? 3 : gTasks[taskId].tPaletteSelect - 1;
-        }
-        else if (JOY_NEW(DPAD_RIGHT))
-        {
-            gTasks[taskId].tPaletteSelect = (gTasks[taskId].tPaletteSelect == 3) ? 0 : gTasks[taskId].tPaletteSelect + 1;
-        }
-    }
-
-    if (gTasks[taskId].tState < 2 && JOY_NEW(DPAD_ANY | A_BUTTON | B_BUTTON))
-    {
-        PlaySE(SE_SELECT);
-
         if (gTasks[taskId].tPaletteSelect < 0)
         {
-            CURSOR.x = CURSOR_X + (gTasks[taskId].tModelSelect * CURSOR_DELTA_X);
-            CURSOR.y = CURSOR_Y;
+            if (JOY_NEW(A_BUTTON | DPAD_DOWN))
+            {
+                PP_A.invisible = PP_B.invisible = PP_C.invisible = PP_D.invisible = FALSE;
+                
+                if (JOY_NEW(A_BUTTON))
+                    gTasks[taskId].tPaletteSelect = 0;
+                else
+                    gTasks[taskId].tPaletteSelect = gTasks[taskId].tModelSelect;
+            }
+            else if (JOY_NEW(DPAD_LEFT))
+            {
+                gTasks[taskId].tModelSelect = (gTasks[taskId].tModelSelect == 0) ? 3 : gTasks[taskId].tModelSelect - 1;
+            }
+            else if (JOY_NEW(DPAD_RIGHT))
+            {
+                gTasks[taskId].tModelSelect = (gTasks[taskId].tModelSelect == 3) ? 0 : gTasks[taskId].tModelSelect + 1;
+            }
         }
         else
         {
-            CURSOR.x = CURSOR_X + (gTasks[taskId].tPaletteSelect * CURSOR_DELTA_X);
-            CURSOR.y = CURSOR_Y + CURSOR_DELTA_Y;
+            if (JOY_NEW(B_BUTTON | DPAD_UP))
+            {
+                PP_A.invisible = PP_B.invisible = PP_C.invisible = PP_D.invisible = TRUE;
+                
+                if (JOY_NEW(DPAD_UP))
+                    gTasks[taskId].tModelSelect = gTasks[taskId].tPaletteSelect;
+                gTasks[taskId].tPaletteSelect = -1;
+            }
+            else if (JOY_NEW(A_BUTTON))
+            {
+                FillWindowPixelBuffer(0, PIXEL_FILL(0));
+                CopyWindowToVram(0, COPYWIN_GFX);
+                StringExpandPlaceholders(gStringVar4, gText_Kukui_ChoiceOK);
+                AddTextPrinterForMessageKukui(TRUE);
+                gTasks[taskId].func = Task_CreatePhotoYesNo;
+                // gTasks[taskId].tState = 1;
+            }
+            else if (JOY_NEW(DPAD_LEFT))
+            {
+                gTasks[taskId].tPaletteSelect = (gTasks[taskId].tPaletteSelect == 0) ? 3 : gTasks[taskId].tPaletteSelect - 1;
+            }
+            else if (JOY_NEW(DPAD_RIGHT))
+            {
+                gTasks[taskId].tPaletteSelect = (gTasks[taskId].tPaletteSelect == 3) ? 0 : gTasks[taskId].tPaletteSelect + 1;
+            }
+        }
 
-            u16 tileNum = 0;
-            if (gTasks[taskId].tModelSelect == 0)
-                tileNum = PP_M1.oam.tileNum;
-            else if (gTasks[taskId].tModelSelect == 1)
-                tileNum = PP_M2.oam.tileNum;
-            else if (gTasks[taskId].tModelSelect == 2)
-                tileNum = PP_F1.oam.tileNum;
-            else if (gTasks[taskId].tModelSelect == 3)
-                tileNum = PP_F2.oam.tileNum;
-            
-            PP_A.oam.tileNum = PP_B.oam.tileNum = PP_C.oam.tileNum = PP_D.oam.tileNum = tileNum;
+        if (gTasks[taskId].tState < 2 && JOY_NEW(DPAD_ANY | A_BUTTON | B_BUTTON))
+        {
+            s16 x = CURSOR.x;
+            s16 y = CURSOR.y;
+
+            if (gTasks[taskId].tPaletteSelect < 0)
+            {
+                CURSOR.x = CURSOR_X + (gTasks[taskId].tModelSelect * CURSOR_DELTA_X);
+                CURSOR.y = CURSOR_Y;
+            }
+            else
+            {
+                CURSOR.x = CURSOR_X + (gTasks[taskId].tPaletteSelect * CURSOR_DELTA_X);
+                CURSOR.y = CURSOR_Y + CURSOR_DELTA_Y;
+
+                u16 tileNum = 0;
+                if (gTasks[taskId].tModelSelect == 0)
+                    tileNum = PP_M1.oam.tileNum;
+                else if (gTasks[taskId].tModelSelect == 1)
+                    tileNum = PP_M2.oam.tileNum;
+                else if (gTasks[taskId].tModelSelect == 2)
+                    tileNum = PP_F1.oam.tileNum;
+                else if (gTasks[taskId].tModelSelect == 3)
+                    tileNum = PP_F2.oam.tileNum;
+                
+                PP_A.oam.tileNum = PP_B.oam.tileNum = PP_C.oam.tileNum = PP_D.oam.tileNum = tileNum;
+            }
+
+            if (!JOY_NEW(DPAD_ANY) || x != CURSOR.x || y != CURSOR.y)
+                PlaySE(SE_SELECT);
         }
     }
 
