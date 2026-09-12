@@ -237,18 +237,16 @@ string generate_map_overlay_text(Json map_data) {
 
         // Sort indices by X then Y
         std::sort(indices.begin(), indices.end(), [&tiles](size_t a, size_t b) {
-            int ax = stoi(json_to_string(tiles[a], "x"));
-            int ay = stoi(json_to_string(tiles[a], "y"));
-            int bx = stoi(json_to_string(tiles[b], "x"));
-            int by = stoi(json_to_string(tiles[b], "y"));
-            return (ax != bx) ? ax < bx : ay < by;
+            int aidx = stoi(json_to_string(tiles[a], "idx"));
+            int bidx = stoi(json_to_string(tiles[b], "idx"));
+            return aidx < bidx;
         });
 
         // Emit tile data in sorted order
         text << mapName << "_MapOverlayTiles:\n";
         for (size_t i : indices) {
             auto &tile = tiles[i];
-            text << "\t.2byte " << json_to_string(tile, "x") << ", " << json_to_string(tile, "y") << "\n";
+            // text << "\t.2byte " << json_to_string(tile, "x") << ", " << json_to_string(tile, "y") << "\n";
             text << "\t.2byte " << json_to_string(tile, "top_tile_id") << "\n";
         }
 

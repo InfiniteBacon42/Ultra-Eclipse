@@ -31,7 +31,7 @@ static s32 MapPosToBgTilemapOffset(struct FieldCameraOffset *, s32, s32);
 static void DrawWholeMapViewInternal(int, int, const struct MapLayout *);
 static void DrawMetatileAt(const struct MapLayout *, u16, int, int);
 static void DrawMetatile(s32, const u16 *, u16);
-static void DrawMetatileForOverlay(s32 metatileLayerType, const u16 *tiles, u16 offset, int x, int y);
+static void DrawMetatileForOverlay(s32 metatileLayerType, const u16 *tiles, u16 offset, int x, int y, int width);
 static void CameraPanningCB_PanAhead(void);
 
 static struct FieldCameraOffset sFieldCameraOffset;
@@ -247,7 +247,7 @@ static void DrawMetatileAt(const struct MapLayout *mapLayout, u16 offset, int x,
     }
     else
     {
-        DrawMetatileForOverlay(MapGridGetMetatileLayerTypeAt(x,y), metatiles + metatileId * NUM_TILES_PER_METATILE, offset, (x - MAP_OFFSET), (y - MAP_OFFSET));
+        DrawMetatileForOverlay(MapGridGetMetatileLayerTypeAt(x,y), metatiles + metatileId * NUM_TILES_PER_METATILE, offset, (x - MAP_OFFSET), (y - MAP_OFFSET), mapLayout->width);
     }
 }
 
@@ -303,13 +303,10 @@ static void DrawMetatile(s32 metatileLayerType, const u16 *tiles, u16 offset)
     ScheduleBgCopyTilemapToVram(3);
 }
 
-static void DrawMetatileForOverlay(s32 metatileLayerType, const u16 *tiles, u16 offset, int x, int y)
+static void DrawMetatileForOverlay(s32 metatileLayerType, const u16 *tiles, u16 offset, int x, int y, int width)
 {
-    u16 i = 0;
     u16 topTileId = 0;
     const u16 *ovTiles = NULL;
-    int ox = 0;
-    int oy = 0;
 
     switch (metatileLayerType)
     {
@@ -415,40 +412,28 @@ static void DrawMetatileForOverlay(s32 metatileLayerType, const u16 *tiles, u16 
             break;
     }
 
-    for (i = 0; i < gMapHeader.overlay->overlayTileCount; i++)
+    topTileId = gMapHeader.overlay->overlayTiles[y * width + x].topTileId;
+
+
+    if (topTileId < NUM_METATILES_IN_PRIMARY)
     {
-        ox = gMapHeader.overlay->overlayTiles[i].x;
-        oy = gMapHeader.overlay->overlayTiles[i].y;
-
-        if (ox > x)   // early exit because tiles sorted by X then Y in the generator
-            break;
-
-        if (ox == x && oy == y)
-        {
-            topTileId = gMapHeader.overlay->overlayTiles[i].topTileId;
-
-
-            if (topTileId < NUM_METATILES_IN_PRIMARY)
-            {
-                ovTiles = gMapHeader.mapLayout->primaryTileset->metatiles
-                            + topTileId * NUM_TILES_PER_METATILE;
-            }
-            else
-            {
-                topTileId -= NUM_METATILES_IN_PRIMARY;
-                ovTiles = gMapHeader.mapLayout->secondaryTileset->metatiles
-                            + topTileId * NUM_TILES_PER_METATILE;
-            }
-
-            // Replace only the *top layer* (indices 8–11 → BG1)
-            gOverworldTilemapBuffer_Bg1[offset]         = ovTiles[8];
-            gOverworldTilemapBuffer_Bg1[offset + 1]     = ovTiles[9];
-            gOverworldTilemapBuffer_Bg1[offset + 0x20]  = ovTiles[10];
-            gOverworldTilemapBuffer_Bg1[offset + 0x21]  = ovTiles[11];
-
-            break; // Found match, nothing more to do
-        }
+        ovTiles = gMapHeader.mapLayout->primaryTileset->metatiles
+                    + topTileId * NUM_TILES_PER_METATILE;
     }
+    else
+    {
+        topTileId -= NUM_METATILES_IN_PRIMARY;
+        ovTiles = gMapHeader.mapLayout->secondaryTileset->metatiles
+                    + topTileId * NUM_TILES_PER_METATILE;
+    }
+
+    // Replace only the *top layer* (indices 8–11 → BG1)
+    gOverworldTilemapBuffer_Bg1[offset]         = ovTiles[8];
+    gOverworldTilemapBuffer_Bg1[offset + 1]     = ovTiles[9];
+    gOverworldTilemapBuffer_Bg1[offset + 0x20]  = ovTiles[10];
+    gOverworldTilemapBuffer_Bg1[offset + 0x21]  = ovTiles[11];
+
+
     ScheduleBgCopyTilemapToVram(1);
     ScheduleBgCopyTilemapToVram(2);
     ScheduleBgCopyTilemapToVram(3);

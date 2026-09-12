@@ -25,19 +25,22 @@ tile_map = [
     [0x84, 0x80, 0x80, 0xD3, 0xD4, 0xD5, 0x80, 0x80, 0x80, 0xDC, 0xDD, 0xDE, 0x80, 0x80, 0x82, 0x83]  # 15
 ]
 
+idx = 0
 for y in range(rows):
     # row = []
 
     for x in range(cols):
         tile_x = x % 16
         tile_y = y % 16
-        if tile_map[tile_y][tile_x] != 0x80:
-            tile = {
-                "top_tile_id": tile_map[tile_y][tile_x],
-                "x": x,
-                "y": y
-            }
-            matrix.append(tile)
+        #if tile_map[tile_y][tile_x] != 0x80:
+        tile = {
+            "top_tile_id": tile_map[tile_y][tile_x],
+            "idx": idx
+            #"x": x,
+            #"y": y
+        }
+        matrix.append(tile)
+        idx += 1
     # matrix.append(row)
 
 with open("test.json", "w") as file:

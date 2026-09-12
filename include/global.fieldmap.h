@@ -163,8 +163,6 @@ struct MapConnections
 };
 
 struct MapOverlayTiles {
-    s16 x;
-    s16 y;
     u16 topTileId; // The top layer from this meta tile will replace the metatiles at x,y's top layer
 } __attribute__((packed));
 
