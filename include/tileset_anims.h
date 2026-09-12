@@ -41,6 +41,8 @@ void InitTilesetAnim_Floaroma(void);
 void InitTilesetAnim_Route205South(void);
 void InitTilesetAnim_FloaromaMeadow(void);
 void InitTilesetAnim_ValleyWindworksIndoor(void);
-void InitTilesetAnim_EternaForest(void);
+
+// [Porytiles] Auto-generated declaration. Do not remove.
+void InitTilesetAnim_PorytilesManaged_IndoorForest(void);
 
 #endif // GUARD_TILESET_ANIMS_H

@@ -1396,11 +1396,11 @@ const struct Tileset gTileset_IndoorForest =
 {
     .isCompressed = TRUE,
     .isSecondary = FALSE,
-    .tiles = gTilesetTiles_IndoorForest,
-    .palettes = gTilesetPalettes_IndoorForest,
-    .metatiles = gMetatiles_IndoorForest,
-    .metatileAttributes = gMetatileAttributes_IndoorForest,
-    .callback = InitTilesetAnim_EternaForest,
+    .tiles = gTilesetTiles_PorytilesManaged_IndoorForest,
+    .palettes = gTilesetPalettes_PorytilesManaged_IndoorForest,
+    .metatiles = gMetatiles_PorytilesManaged_IndoorForest,
+    .metatileAttributes = gMetatileAttributes_PorytilesManaged_IndoorForest,
+    .callback = InitTilesetAnim_PorytilesManaged_IndoorForest,
 };
 
 const struct Tileset gTileset_OutdoorEterna =

@@ -9983,12 +9983,14 @@ static const u8 sElevationToSubpriority[] = {
     115, 115, 83, 115, 83, 115, 83, 115, 83, 115, 83, 115, 83, 0, 0, 115
 };
 
-static const u8 sElevationToPriority[] = {
-    2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 0, 2
+static const u8 sElevationToPriority[2][16] = {
+    {2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 0, 2}, // Map with no overlay
+    {2, 3, 3, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 0, 2}  // Map with overlay
 };
 
-static const u8 sElevationToSubspriteTableNum[] = {
-    1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1,
+static const u8 sElevationToSubspriteTableNum[2][16] = {
+    {1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1}, // Map with no overlay
+    {1, 0, 4, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1}, // Map with overlay
 };
 
 static void UpdateObjectEventElevationAndPriority(struct ObjectEvent *objEvent, struct Sprite *sprite)
@@ -10008,19 +10010,19 @@ static void UpdateObjectEventElevationAndPriority(struct ObjectEvent *objEvent, 
             objEvent = &gObjectEvents[gPlayerAvatar.objectEventId];
     }
 
-    sprite->subspriteTableNum = sElevationToSubspriteTableNum[objEvent->previousElevation];
-    sprite->oam.priority = sElevationToPriority[objEvent->previousElevation];
+    sprite->subspriteTableNum = sElevationToSubspriteTableNum[gMapHeader.overlay != NULL][objEvent->previousElevation];
+    sprite->oam.priority = sElevationToPriority[gMapHeader.overlay != NULL][objEvent->previousElevation];
 }
 
 static void InitObjectPriorityByElevation(struct Sprite *sprite, u8 elevation)
 {
-    sprite->subspriteTableNum = sElevationToSubspriteTableNum[elevation];
-    sprite->oam.priority = sElevationToPriority[elevation];
+    sprite->subspriteTableNum = sElevationToSubspriteTableNum[gMapHeader.overlay != NULL][elevation];
+    sprite->oam.priority = sElevationToPriority[gMapHeader.overlay != NULL][elevation];
 }
 
 u8 ElevationToPriority(u8 elevation)
 {
-    return sElevationToPriority[elevation];
+    return sElevationToPriority[gMapHeader.overlay != NULL][elevation];
 }
 
 // Returns current elevation, or 15 for bridges
@@ -10082,7 +10084,7 @@ void GroundEffect_SpawnOnTallGrass(struct ObjectEvent *objEvent, struct Sprite *
     gFieldEffectArguments[0] = objEvent->currentCoords.x;
     gFieldEffectArguments[1] = objEvent->currentCoords.y;
     gFieldEffectArguments[2] = objEvent->previousElevation;
-    gFieldEffectArguments[3] = 2; // priority
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2; // priority
     gFieldEffectArguments[4] = objEvent->localId << 8 | objEvent->mapNum;
     gFieldEffectArguments[5] = objEvent->mapGroup;
     gFieldEffectArguments[6] = (u8)gSaveBlock1Ptr->location.mapNum << 8 | (u8)gSaveBlock1Ptr->location.mapGroup;
@@ -10095,7 +10097,7 @@ void GroundEffect_StepOnTallGrass(struct ObjectEvent *objEvent, struct Sprite *s
     gFieldEffectArguments[0] = objEvent->currentCoords.x;
     gFieldEffectArguments[1] = objEvent->currentCoords.y;
     gFieldEffectArguments[2] = objEvent->previousElevation;
-    gFieldEffectArguments[3] = 2; // priority
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2; // priority
     gFieldEffectArguments[4] = objEvent->localId << 8 | objEvent->mapNum;
     gFieldEffectArguments[5] = objEvent->mapGroup;
     gFieldEffectArguments[6] = (u8)gSaveBlock1Ptr->location.mapNum << 8 | (u8)gSaveBlock1Ptr->location.mapGroup;
@@ -10108,7 +10110,7 @@ void GroundEffect_SpawnOnLongGrass(struct ObjectEvent *objEvent, struct Sprite *
     gFieldEffectArguments[0] = objEvent->currentCoords.x;
     gFieldEffectArguments[1] = objEvent->currentCoords.y;
     gFieldEffectArguments[2] = objEvent->previousElevation;
-    gFieldEffectArguments[3] = 2;
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
     gFieldEffectArguments[4] = objEvent->localId << 8 | objEvent->mapNum;
     gFieldEffectArguments[5] = objEvent->mapGroup;
     gFieldEffectArguments[6] = (u8)gSaveBlock1Ptr->location.mapNum << 8 | (u8)gSaveBlock1Ptr->location.mapGroup;
@@ -10121,7 +10123,7 @@ void GroundEffect_StepOnLongGrass(struct ObjectEvent *objEvent, struct Sprite *s
     gFieldEffectArguments[0] = objEvent->currentCoords.x;
     gFieldEffectArguments[1] = objEvent->currentCoords.y;
     gFieldEffectArguments[2] = objEvent->previousElevation;
-    gFieldEffectArguments[3] = 2;
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
     gFieldEffectArguments[4] = (objEvent->localId << 8) | objEvent->mapNum;
     gFieldEffectArguments[5] = objEvent->mapGroup;
     gFieldEffectArguments[6] = (u8)gSaveBlock1Ptr->location.mapNum << 8 | (u8)gSaveBlock1Ptr->location.mapGroup;
