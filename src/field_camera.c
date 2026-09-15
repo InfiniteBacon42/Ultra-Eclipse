@@ -11,6 +11,7 @@
 #include "rotating_gate.h"
 #include "sprite.h"
 #include "text.h"
+#include "constants/layouts.h"
 
 //EWRAM_DATA bool8 gUnusedBikeCameraAheadPanback = FALSE;   //  Old EWRAM variable that was never set to anything other than false
 
@@ -39,6 +40,10 @@ static s16 sHorizontalCameraPan;
 static s16 sVerticalCameraPan;
 static bool8 sBikeCameraPanFlag;
 static void (*sFieldCameraPanningCallback)(void);
+
+// In Eterna Forest, shift the BG1 horizontal offset every 32 frames in the same pattern as DPPt
+static u16 sBG1AnimFrame = 0;
+static const s16 sBG1AnimFrameOffsets[] = {-1, 0, 1, 0, -1, 0, 1, 0, -1, 0};
 
 COMMON_DATA struct CameraObject gFieldCamera = {0};
 COMMON_DATA u16 gTotalCameraPixelOffsetY = 0;
@@ -78,7 +83,19 @@ void FieldUpdateBgTilemapScroll(void)
     r5 = sFieldCameraOffset.xPixelOffset + sHorizontalCameraPan;
     r4 = sVerticalCameraPan + sFieldCameraOffset.yPixelOffset + 8;
 
-    SetGpuReg(REG_OFFSET_BG1HOFS, r5);
+    if (gMapHeader.mapLayoutId == LAYOUT_ETERNA_FOREST)
+    {
+        if (sBG1AnimFrame >= (32 * 10))
+            sBG1AnimFrame = 0;
+
+        s16 offset = sBG1AnimFrameOffsets[((sBG1AnimFrame++ / 32) % 10)];
+        SetGpuReg(REG_OFFSET_BG1HOFS, (u16)((r5 - offset) % 512));
+    }
+    else
+    {
+        SetGpuReg(REG_OFFSET_BG1HOFS, r5);
+    }
+
     SetGpuReg(REG_OFFSET_BG1VOFS, r4);
     SetGpuReg(REG_OFFSET_BG2HOFS, r5);
     SetGpuReg(REG_OFFSET_BG2VOFS, r4);
