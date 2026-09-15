@@ -9984,13 +9984,13 @@ static const u8 sElevationToSubpriority[] = {
 };
 
 static const u8 sElevationToPriority[2][16] = {
-    {2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 0, 2}, // Map with no overlay
-    {2, 3, 3, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 0, 2}  // Map with overlay
+    {2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 0, 2},   // Map without Overlay
+    {2, 3, 3, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 0, 2}    // Map with Overlay
 };
 
 static const u8 sElevationToSubspriteTableNum[2][16] = {
-    {1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1}, // Map with no overlay
-    {1, 0, 4, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1}, // Map with overlay
+    {1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1},   // Map without Overlay
+    {1, 0, 4, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 0, 0, 1}    // Map with Overlay
 };
 
 static void UpdateObjectEventElevationAndPriority(struct ObjectEvent *objEvent, struct Sprite *sprite)
@@ -10182,7 +10182,7 @@ static void DoTracksGroundEffect_Footprints(struct ObjectEvent *objEvent, struct
     gFieldEffectArguments[0] = objEvent->previousCoords.x;
     gFieldEffectArguments[1] = objEvent->previousCoords.y;
     gFieldEffectArguments[2] = 149;
-    gFieldEffectArguments[3] = 2;
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
     gFieldEffectArguments[4] = objEvent->facingDirection;
     FieldEffectStart(sandFootprints_FieldEffectData[isDeepSand]);
 }
@@ -10198,7 +10198,7 @@ static void DoTracksGroundEffect_FootprintsB(struct ObjectEvent *objEvent, struc
     gFieldEffectArguments[0] = objEvent->previousCoords.x;
     gFieldEffectArguments[1] = objEvent->previousCoords.y;
     gFieldEffectArguments[2] = 149;
-    gFieldEffectArguments[3] = 2;
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
     gFieldEffectArguments[4] = objEvent->facingDirection;
     gFieldEffectArguments[5] = objEvent->previousMetatileBehavior;
     FieldEffectStart(otherFootprintsA_FieldEffectData[isDeepSand]);
@@ -10215,7 +10215,7 @@ static void DoTracksGroundEffect_FootprintsC(struct ObjectEvent *objEvent, struc
     gFieldEffectArguments[0] = objEvent->previousCoords.x;
     gFieldEffectArguments[1] = objEvent->previousCoords.y;
     gFieldEffectArguments[2] = 149;
-    gFieldEffectArguments[3] = 2;
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
     gFieldEffectArguments[4] = objEvent->facingDirection;
     gFieldEffectArguments[5] = objEvent->previousMetatileBehavior;
     FieldEffectStart(otherFootprintsB_FieldEffectData[isDeepSand]);
@@ -10242,7 +10242,7 @@ static void DoTracksGroundEffect_BikeTireTracks(struct ObjectEvent *objEvent, st
         gFieldEffectArguments[0] = objEvent->previousCoords.x;
         gFieldEffectArguments[1] = objEvent->previousCoords.y;
         gFieldEffectArguments[2] = 149;
-        gFieldEffectArguments[3] = 2;
+        gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
         gFieldEffectArguments[4] =
         bikeTireTracks_Transitions[movementDir][objEvent->facingDirection - 5];
         FieldEffectStart(FLDEFF_BIKE_TIRE_TRACKS);
@@ -10269,7 +10269,7 @@ static void DoTracksGroundEffect_SlitherTracks(struct ObjectEvent *objEvent, str
         gFieldEffectArguments[0] = objEvent->previousCoords.x;
         gFieldEffectArguments[1] = objEvent->previousCoords.y;
         gFieldEffectArguments[2] = 149;
-        gFieldEffectArguments[3] = 2;
+        gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
         gFieldEffectArguments[4] =
         slitherTracks_Transitions[objEvent->previousMovementDirection][objEvent->facingDirection - 5];
         gFieldEffectArguments[5] = objEvent->previousMetatileBehavior;
@@ -10299,7 +10299,7 @@ void GroundEffect_JumpOnTallGrass(struct ObjectEvent *objEvent, struct Sprite *s
     gFieldEffectArguments[0] = objEvent->currentCoords.x;
     gFieldEffectArguments[1] = objEvent->currentCoords.y;
     gFieldEffectArguments[2] = objEvent->previousElevation;
-    gFieldEffectArguments[3] = 2;
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
     FieldEffectStart(FLDEFF_JUMP_TALL_GRASS);
 
     spriteId = FindTallGrassFieldEffectSpriteId(
@@ -10318,7 +10318,7 @@ void GroundEffect_JumpOnLongGrass(struct ObjectEvent *objEvent, struct Sprite *s
     gFieldEffectArguments[0] = objEvent->currentCoords.x;
     gFieldEffectArguments[1] = objEvent->currentCoords.y;
     gFieldEffectArguments[2] = objEvent->previousElevation;
-    gFieldEffectArguments[3] = 2;
+    gFieldEffectArguments[3] = (gMapHeader.overlay != NULL) ? sprite->oam.priority : 2;
     FieldEffectStart(FLDEFF_JUMP_LONG_GRASS);
 }
 
